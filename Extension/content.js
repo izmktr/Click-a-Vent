@@ -183,7 +183,7 @@ function handleClick(e) {
       e.target.closest('#click-a-vent-info')) {
     return;
   }
-  // 要素のテキストを取得
+  
   // 要素のテキストを取得
   const selectedText = getElementText(e.target);
   
@@ -192,6 +192,7 @@ function handleClick(e) {
   
   // XPathを取得して保存
   selectedXPaths[currentField] = getXPath(e.target);
+  
   // ハイライトをクリア
   if (highlightedElement) {
     highlightedElement.style.outline = '';
@@ -317,12 +318,12 @@ function getXPath(element) {
     
     const tagName = current.nodeName.toLowerCase();
     const pathIndex = index > 0 ? `[${index + 1}]` : '';
+    path = `/${tagName}${pathIndex}${path}`;
+    
+    current = current.parentNode;
+  }
   
   return path;
-}
-
-// 要素からテキストを取得
-  }
 }
 
 // 要素からテキストを取得
