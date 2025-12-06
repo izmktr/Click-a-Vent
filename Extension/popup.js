@@ -324,7 +324,7 @@ async function handleRegister() {
 }
 // 設定ボタン
 function handleSettings() {
-  alert('設定機能は今後追加予定です。');
+  chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
 }
 
 // Googleカレンダーを開く

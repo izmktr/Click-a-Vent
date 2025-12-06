@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Click-a-Vent 設定</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Click-a-Vent 設定</h1>
+    </header>
+
+    <!-- タブナビゲーション -->
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="auto-config">自動設定</button>
+      <button class="tab-btn" data-tab="date-format">日付設定</button>
+      <button class="tab-btn" data-tab="time-format">時刻設定</button>
+      <button class="tab-btn" data-tab="history">履歴</button>
+    </nav>
+
+    <!-- 自動設定タブ -->
+    <div class="tab-content active" id="auto-config">
+      <div class="split-layout">
+        <!-- 左側：URLリスト -->
+        <div class="left-panel">
+          <h2>登録済みURL</h2>
+          <div class="url-list" id="url-list">
+            <!-- 動的に生成 -->
+          </div>
+          <div class="control-buttons">
+            <button id="move-up-btn" class="control-btn" disabled>↑</button>
+            <button id="move-down-btn" class="control-btn" disabled>↓</button>
+            <button id="new-btn" class="control-btn">新規</button>
+            <button id="delete-btn" class="control-btn" disabled>削除</button>
+          </div>
+        </div>
+
+        <!-- 右側：詳細情報 -->
+        <div class="right-panel">
+          <h2>詳細設定</h2>
+          <form id="auto-config-form">
+            <div class="form-group">
+              <label for="config-url">URL <span class="required">*</span></label>
+              <input type="text" id="config-url" placeholder="https://example.com/events/" required>
+              <small>前方一致でマッチします</small>
+            </div>
+            
+            <div class="form-group">
+              <label for="config-event-xpath">イベント名のXPath <span class="required">*</span></label>
+              <input type="text" id="config-event-xpath" placeholder="/html/body/div[1]/h1" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="config-datetime-xpath">開始時刻のXPath</label>
+              <input type="text" id="config-datetime-xpath" placeholder="/html/body/div[2]/time">
+            </div>
+            
+            <div class="form-group">
+              <label for="config-location-xpath">場所のXPath</label>
+              <input type="text" id="config-location-xpath" placeholder="/html/body/div[3]/span">
+            </div>
+            
+            <button type="submit" id="submit-config-btn" class="primary-btn" disabled>追加</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日付設定タブ -->
+    <div class="tab-content" id="date-format">
+      <h2>日付フォーマット設定</h2>
+      <p class="description">
+        テキストから日付を抽出するフォーマットを設定します。<br>
+        %Y=年、%M=月、%D=日（小文字も可）<br>
+        上から順にマッチし、最初にマッチしたフォーマットが使用されます。
+      </p>
+      
+      <div class="format-section">
+        <label for="date-format-input">日付フォーマット（1行に1つ）</label>
+        <textarea id="date-format-input" rows="10" placeholder="%Y年%M月%D日
+%M月%D日
+%M/%D"></textarea>
+        
+        <div class="button-group">
+          <button id="test-date-btn" class="secondary-btn">テスト</button>
+          <button id="save-date-btn" class="primary-btn" disabled>登録</button>
+        </div>
+        
+        <div id="date-test-result" class="test-result"></div>
+      </div>
+    </div>
+
+    <!-- 時刻設定タブ -->
+    <div class="tab-content" id="time-format">
+      <h2>時刻フォーマット設定</h2>
+      <p class="description">
+        テキストから時刻を抽出するフォーマットを設定します。<br>
+        %H=時、%M=分（小文字も可、分は省略可）<br>
+        上から順にマッチし、最初にマッチしたフォーマットが使用されます。
+      </p>
+      
+      <div class="format-section">
+        <label for="time-format-input">時刻フォーマット（1行に1つ）</label>
+        <textarea id="time-format-input" rows="10" placeholder="%H:%M
+%H：%M
+%H時%M分
+%H時"></textarea>
+        
+        <div class="button-group">
+          <button id="test-time-btn" class="secondary-btn">テスト</button>
+          <button id="save-time-btn" class="primary-btn" disabled>登録</button>
+        </div>
+        
+        <div id="time-test-result" class="test-result"></div>
+      </div>
+    </div>
+
+    <!-- 履歴タブ -->
+    <div class="tab-content" id="history">
+      <h2>登録履歴（最新30件）</h2>
+      
+      <div id="history-list" class="history-list">
+        <!-- 動的に生成 -->
+      </div>
+      
+      <div id="no-history" class="no-data">
+        まだ登録履歴がありません
+      </div>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>
