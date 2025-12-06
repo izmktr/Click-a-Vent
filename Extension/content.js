@@ -9,10 +9,18 @@ let infoBox = null;
 
 // メッセージリスナー
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'ping') {
+    // コンテンツスクリプトが読み込まれているか確認するためのpingに応答
+    sendResponse({ status: 'ready' });
+    return true;
+  }
+  
   if (request.action === 'startSelection') {
     startSelectionMode(request.fields);
     sendResponse({ success: true });
+    return true;
   }
+  
   return true;
 });
 
@@ -230,10 +238,12 @@ function moveToNextField() {
     // 全フィールドの選択完了
     endSelectionMode();
     
-    // 選択したデータをポップアップに送信
-    chrome.runtime.sendMessage({ 
-      action: 'selectedData', 
-      data: selectedData 
+    // 選択したデータをstorageに保存
+    chrome.storage.local.set({ selectedData: selectedData }, () => {
+      // ポップアップを開く
+      chrome.runtime.sendMessage({ 
+        action: 'openPopup'
+      });
     });
   }
 }

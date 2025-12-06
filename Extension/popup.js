@@ -12,7 +12,9 @@ let eventData = {
 const loginScreen = document.getElementById('login-screen');
 const mainScreen = document.getElementById('main-screen');
 const loginBtn = document.getElementById('login-btn');
+const skipLoginBtn = document.getElementById('skip-login-btn');
 const closeLoginBtn = document.getElementById('close-login-btn');
+const showSetupGuideBtn = document.getElementById('show-setup-guide');
 const selectFromPageBtn = document.getElementById('select-from-page-btn');
 const registerBtn = document.getElementById('register-btn');
 const closeMainBtn = document.getElementById('close-main-btn');
@@ -28,13 +30,23 @@ const eventLocationInput = document.getElementById('event-location');
 document.addEventListener('DOMContentLoaded', async () => {
   await checkLoginStatus();
   setupEventListeners();
+  
+  // storageから選択されたデータを取得
+  const result = await chrome.storage.local.get(['selectedData']);
+  if (result.selectedData) {
+    loadSelectedData(result.selectedData);
+    // 使用後はクリア
+    await chrome.storage.local.remove(['selectedData']);
+  }
 });
 
 // イベントリスナーの設定
 function setupEventListeners() {
   loginBtn.addEventListener('click', handleLogin);
+  skipLoginBtn.addEventListener('click', handleSkipLogin);
   closeLoginBtn.addEventListener('click', () => window.close());
   closeMainBtn.addEventListener('click', () => window.close());
+  showSetupGuideBtn.addEventListener('click', showSetupGuide);
   selectFromPageBtn.addEventListener('click', handleSelectFromPage);
   registerBtn.addEventListener('click', handleRegister);
   settingsBtn.addEventListener('click', handleSettings);
@@ -60,21 +72,48 @@ async function checkLoginStatus() {
 // ログイン処理
 async function handleLogin() {
   try {
+    // OAuth設定の確認
+    const manifest = chrome.runtime.getManifest();
+    if (!manifest.oauth2 || manifest.oauth2.client_id === 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
+      showStatusMessage('エラー: manifest.jsonにGoogle OAuth Client IDを設定してください。詳細はREADME.mdを参照してください。', 'error');
+      console.error('OAuth2 Client IDが設定されていません');
+      return;
+    }
+
+    showStatusMessage('Googleアカウントでログインしています...', 'info');
+    
     const token = await getAuthToken();
     if (token) {
       currentToken = token;
       await chrome.storage.local.set({ accessToken: token });
       showMainScreen();
+      showStatusMessage('ログインに成功しました！', 'success');
     }
   } catch (error) {
     console.error('ログインエラー:', error);
-    showStatusMessage('ログインに失敗しました。', 'error');
+    let errorMessage = 'ログインに失敗しました。';
+    
+    if (error.message) {
+      errorMessage += '\n詳細: ' + error.message;
+    }
+    
+    // 開発中のための詳細なエラー情報
+    if (error.message && error.message.includes('OAuth2')) {
+      errorMessage = 'OAuth2の設定が必要です。README.mdの「Google Cloud Consoleでの設定」セクションを参照してください。';
+    }
+    
+    showStatusMessage(errorMessage, 'error');
   }
 }
 
 // 認証トークンの取得
 function getAuthToken() {
   return new Promise((resolve, reject) => {
+    if (!chrome.identity || !chrome.identity.getAuthToken) {
+      reject(new Error('Chrome Identity APIが利用できません'));
+      return;
+    }
+    
     chrome.identity.getAuthToken({ interactive: true }, (token) => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
@@ -83,6 +122,32 @@ function getAuthToken() {
       }
     });
   });
+}
+
+// ログインスキップ（テスト用）
+function handleSkipLogin() {
+  currentToken = 'TEST_MODE';
+  showMainScreen();
+  showStatusMessage('テストモードで起動しました。Google Calendarへの登録は行われません。', 'info');
+}
+
+// セットアップガイドの表示
+function showSetupGuide(e) {
+  e.preventDefault();
+  const guideText = `【Google Cloud Console セットアップ手順】
+
+1. https://console.cloud.google.com/ にアクセス
+2. 新しいプロジェクトを作成
+3. 「APIとサービス」→「ライブラリ」から「Google Calendar API」を検索して有効化
+4. 「APIとサービス」→「認証情報」→「認証情報を作成」→「OAuth クライアントID」
+5. アプリケーションの種類: 「Chrome拡張機能」を選択
+6. 拡張機能のID: chrome://extensions/ で確認したIDを入力
+7. 作成したクライアントIDをコピー
+8. manifest.jsonの"oauth2"セクションの"client_id"に貼り付け
+
+詳細はREADME.mdを参照してください。`;
+  
+  alert(guideText);
 }
 
 // 画面表示の切り替え
@@ -101,6 +166,42 @@ async function handleSelectFromPage() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
+    if (!tab || !tab.id) {
+      showStatusMessage('アクティブなタブが見つかりません。', 'error');
+      return;
+    }
+
+    // chrome:// や edge:// などの特殊なURLではコンテンツスクリプトを注入できない
+    if (tab.url && (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:'))) {
+      showStatusMessage('このページではコンテンツスクリプトを実行できません。通常のWebページで試してください。', 'error');
+      return;
+    }
+
+    try {
+      // コンテンツスクリプトが既に注入されているか確認
+      await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+    } catch (error) {
+      // コンテンツスクリプトが注入されていない場合は注入する
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js']
+        });
+        
+        await chrome.scripting.insertCSS({
+          target: { tabId: tab.id },
+          files: ['content.css']
+        });
+        
+        // スクリプトの読み込みを待つ
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (injectError) {
+        console.error('コンテンツスクリプト注入エラー:', injectError);
+        showStatusMessage('コンテンツスクリプトの注入に失敗しました。ページを再読み込みしてください。', 'error');
+        return;
+      }
+    }
+    
     // コンテンツスクリプトに選択モード開始を通知
     await chrome.tabs.sendMessage(tab.id, { 
       action: 'startSelection',
@@ -111,7 +212,7 @@ async function handleSelectFromPage() {
     window.close();
   } catch (error) {
     console.error('選択モード開始エラー:', error);
-    showStatusMessage('ページからの選択に失敗しました。', 'error');
+    showStatusMessage('ページからの選択に失敗しました。エラー: ' + error.message, 'error');
   }
 }
 
@@ -132,6 +233,20 @@ async function handleRegister() {
 
     if (!eventDate) {
       showStatusMessage('日付と開始時刻を入力してください。', 'error');
+      return;
+    }
+
+    // テストモードの場合
+    if (currentToken === 'TEST_MODE') {
+      showStatusMessage('テストモード: イベント情報を確認しました（実際の登録は行われません）', 'info');
+      console.log('テストモード - イベント情報:', { eventName, eventDate, eventEndTime, eventLocation });
+      
+      // フォームをクリア
+      eventNameInput.value = '';
+      eventDateInput.value = '';
+      eventEndTimeInput.value = '';
+      eventLocationInput.value = '';
+      
       return;
     }
 
@@ -250,19 +365,27 @@ function showStatusMessage(message, type = 'info') {
   }, 3000);
 }
 
+// 選択されたデータをフォームに読み込む
+function loadSelectedData(data) {
+  if (data.eventName) {
+    eventNameInput.value = data.eventName;
+  }
+  if (data.dateTime) {
+    eventDateInput.value = data.dateTime;
+  }
+  if (data.location) {
+    eventLocationInput.value = data.location;
+  }
+  
+  showStatusMessage('ページから情報を取得しました！', 'success');
+}
+
 // コンテンツスクリプトからのメッセージを受信
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'selectedData') {
     // 選択されたデータをフォームに入力
-    if (request.data.eventName) {
-      eventNameInput.value = request.data.eventName;
-    }
-    if (request.data.dateTime) {
-      // 日付時刻の形式を変換
-      eventDateInput.value = request.data.dateTime;
-    }
-    if (request.data.location) {
-      eventLocationInput.value = request.data.location;
-    }
+    loadSelectedData(request.data);
+    sendResponse({ success: true });
   }
+  return true;
 });
