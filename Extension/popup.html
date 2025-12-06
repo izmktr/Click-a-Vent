@@ -7,20 +7,12 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <!-- ログイン前の画面 -->
-  <div id="login-screen" class="screen">
-    <h2>Click-a-Vent</h2>
-    <p>Google Calendarにイベントを登録するには、Googleアカウントでログインしてください。</p>
-    <button id="login-btn" class="primary-btn">Googleにログイン</button>
-    <button id="skip-login-btn" class="secondary-btn" style="margin-top: 10px;">ログインせずに続ける（テスト用）</button>
-    <button id="close-login-btn" class="secondary-btn">閉じる</button>
-    <div id="login-note" style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 4px; font-size: 12px; color: #856404;">
-      ※ OAuth設定が必要です。詳細は<a href="#" id="show-setup-guide" style="color: #856404; text-decoration: underline;">セットアップガイド</a>を参照
-    </div>
+  <!-- ログイン前の画面（非表示） -->
+  <div id="login-screen" class="screen hidden">
   </div>
 
-  <!-- ログイン後の画面 -->
-  <div id="main-screen" class="screen hidden">
+  <!-- メイン画面 -->
+  <div id="main-screen" class="screen">
     <!-- ヘッダー -->
     <div class="header">
       <h2>Click-a-Vent</h2>

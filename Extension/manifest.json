@@ -4,21 +4,11 @@
   "version": "1.0.0",
   "description": "ページの情報をクリックして選択し、Google Calendarにイベントを登録する拡張機能",
   "permissions": [
-    "identity",
     "storage",
     "activeTab",
     "scripting",
     "notifications"
   ],
-  "host_permissions": [
-    "https://www.googleapis.com/*"
-  ],
-  "oauth2": {
-    "client_id": "916871984530-0240delmsj92lms3ubae268khe1dh0jh.apps.googleusercontent.com",
-    "scopes": [
-      "https://www.googleapis.com/auth/calendar.events"
-    ]
-  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

@@ -1,5 +1,4 @@
 // グローバル変数
-let currentToken = null;
 let selectionMode = null; // 'eventName', 'dateTime', 'location'
 let eventData = {
   name: '',
@@ -11,10 +10,6 @@ let eventData = {
 // DOM要素
 const loginScreen = document.getElementById('login-screen');
 const mainScreen = document.getElementById('main-screen');
-const loginBtn = document.getElementById('login-btn');
-const skipLoginBtn = document.getElementById('skip-login-btn');
-const closeLoginBtn = document.getElementById('close-login-btn');
-const showSetupGuideBtn = document.getElementById('show-setup-guide');
 const selectFromPageBtn = document.getElementById('select-from-page-btn');
 const registerBtn = document.getElementById('register-btn');
 const closeMainBtn = document.getElementById('close-main-btn');
@@ -30,7 +25,7 @@ let selectedDurationMinutes = 60; // デフォルトは1時間
 
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
-  await checkLoginStatus();
+  showMainScreen();
   setupEventListeners();
   
   // storageから選択されたデータを取得
@@ -43,11 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 // イベントリスナーの設定
 function setupEventListeners() {
-  loginBtn.addEventListener('click', handleLogin);
-  skipLoginBtn.addEventListener('click', handleSkipLogin);
-  closeLoginBtn.addEventListener('click', () => window.close());
   closeMainBtn.addEventListener('click', () => window.close());
-  showSetupGuideBtn.addEventListener('click', showSetupGuide);
   selectFromPageBtn.addEventListener('click', handleSelectFromPage);
   registerBtn.addEventListener('click', handleRegister);
   openCalendarBtn.addEventListener('click', handleOpenCalendar);
@@ -68,109 +59,7 @@ function setupEventListeners() {
   });
 }
 
-// ログイン状態の確認
-async function checkLoginStatus() {
-  try {
-    const result = await chrome.storage.local.get(['accessToken']);
-    if (result.accessToken) {
-      currentToken = result.accessToken;
-      showMainScreen();
-    } else {
-      showLoginScreen();
-    }
-  } catch (error) {
-    console.error('ログイン状態の確認エラー:', error);
-    showLoginScreen();
-  }
-}
-
-// ログイン処理
-async function handleLogin() {
-  try {
-    // OAuth設定の確認
-    const manifest = chrome.runtime.getManifest();
-    if (!manifest.oauth2 || manifest.oauth2.client_id === 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
-      showStatusMessage('エラー: manifest.jsonにGoogle OAuth Client IDを設定してください。詳細はREADME.mdを参照してください。', 'error');
-      console.error('OAuth2 Client IDが設定されていません');
-      return;
-    }
-
-    showStatusMessage('Googleアカウントでログインしています...', 'info');
-    
-    const token = await getAuthToken();
-    if (token) {
-      currentToken = token;
-      await chrome.storage.local.set({ accessToken: token });
-      showMainScreen();
-      showStatusMessage('ログインに成功しました！', 'success');
-    }
-  } catch (error) {
-    console.error('ログインエラー:', error);
-    let errorMessage = 'ログインに失敗しました。';
-    
-    if (error.message) {
-      errorMessage += '\n詳細: ' + error.message;
-    }
-    
-    // 開発中のための詳細なエラー情報
-    if (error.message && error.message.includes('OAuth2')) {
-      errorMessage = 'OAuth2の設定が必要です。README.mdの「Google Cloud Consoleでの設定」セクションを参照してください。';
-    }
-    
-    showStatusMessage(errorMessage, 'error');
-  }
-}
-
-// 認証トークンの取得
-function getAuthToken() {
-  return new Promise((resolve, reject) => {
-    if (!chrome.identity || !chrome.identity.getAuthToken) {
-      reject(new Error('Chrome Identity APIが利用できません'));
-      return;
-    }
-    
-    chrome.identity.getAuthToken({ interactive: true }, (token) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        resolve(token);
-      }
-    });
-  });
-}
-
-// ログインスキップ（テスト用）
-function handleSkipLogin() {
-  currentToken = 'TEST_MODE';
-  showMainScreen();
-  showStatusMessage('テストモードで起動しました。Google Calendarへの登録は行われません。', 'info');
-}
-
-// セットアップガイドの表示
-function showSetupGuide(e) {
-  e.preventDefault();
-  const guideText = `【Google Cloud Console セットアップ手順】
-
-1. https://console.cloud.google.com/ にアクセス
-2. 新しいプロジェクトを作成
-3. 「APIとサービス」→「ライブラリ」から「Google Calendar API」を検索して有効化
-4. 「APIとサービス」→「認証情報」→「認証情報を作成」→「OAuth クライアントID」
-5. アプリケーションの種類: 「Chrome拡張機能」を選択
-6. 拡張機能のID: chrome://extensions/ で確認したIDを入力
-7. 作成したクライアントIDをコピー
-8. manifest.jsonの"oauth2"セクションの"client_id"に貼り付け
-
-詳細はREADME.mdを参照してください。`;
-  
-  alert(guideText);
-}
-
 // 画面表示の切り替え
-function showLoginScreen() {
-  loginScreen.classList.remove('hidden');
-  mainScreen.classList.add('hidden');
-}
-
 function showMainScreen() {
   loginScreen.classList.add('hidden');
   mainScreen.classList.remove('hidden');
@@ -250,73 +139,45 @@ async function handleRegister() {
       return;
     }
 
-    // テストモードの場合
-    if (currentToken === 'TEST_MODE') {
-      showStatusMessage('テストモード: イベント情報を確認しました（実際の登録は行われません）', 'info');
-      console.log('テストモード - イベント情報:', { eventName, eventDate, duration: selectedDurationMinutes, eventLocation });
-      
-      // フォームをクリア
-      eventNameInput.value = '';
-      eventDateInput.value = '';
-      eventLocationInput.value = '';
-      
-      return;
-    }
-
-    // 終了時刻の処理（選択された経過時間を追加）
+    // 終了時刻の計算（選択された経過時間を追加）
     const startDate = new Date(eventDate);
-    const endDateTime = new Date(startDate.getTime() + selectedDurationMinutes * 60 * 1000);
+    const endDate = new Date(startDate.getTime() + selectedDurationMinutes * 60 * 1000);
 
-    // Google Calendar APIへのリクエスト
-    const event = {
-      summary: eventName,
-      start: {
-        dateTime: new Date(eventDate).toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-      },
-      end: {
-        dateTime: endDateTime.toISOString(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-      }
+    // Googleカレンダーの日時フォーマット（YYYYMMDDTHHmmss形式）
+    const formatGoogleDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = '00';
+      return `${year}${month}${day}T${hours}${minutes}${seconds}`;
     };
 
+    // GoogleカレンダーのURLを構築
+    const calendarUrl = new URL('https://calendar.google.com/calendar/render');
+    calendarUrl.searchParams.set('action', 'TEMPLATE');
+    calendarUrl.searchParams.set('text', eventName);
+    calendarUrl.searchParams.set('dates', `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`);
+    
     if (eventLocation) {
-      event.location = eventLocation;
+      calendarUrl.searchParams.set('location', eventLocation);
     }
 
-    const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${currentToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(event)
-    });
+    // 新しいタブでGoogleカレンダーの登録画面を開く
+    await chrome.tabs.create({ url: calendarUrl.toString() });
 
-    if (response.ok) {
-      showStatusMessage('イベントを登録しました!', 'success');
-      // フォームをクリア
-      eventNameInput.value = '';
-      eventDateInput.value = '';
-      eventLocationInput.value = '';
-      
-      setTimeout(() => {
-        window.close();
-      }, 1500);
-    } else {
-      const errorData = await response.json();
-      console.error('Calendar API エラー:', errorData);
-      
-      // トークンが無効な場合は再ログイン
-      if (response.status === 401) {
-        await chrome.storage.local.remove('accessToken');
-        currentToken = null;
-        showLoginScreen();
-        showStatusMessage('認証が切れました。再度ログインしてください。', 'error');
-      } else {
-        showStatusMessage('イベントの登録に失敗しました。', 'error');
-      }
-    }
+    showStatusMessage('Googleカレンダーの登録画面を開きました！', 'success');
+    
+    // フォームをクリア
+    eventNameInput.value = '';
+    eventDateInput.value = '';
+    eventLocationInput.value = '';
+    
+    // 少し待ってからポップアップを閉じる
+    setTimeout(() => {
+      window.close();
+    }, 1000);
   } catch (error) {
     console.error('登録エラー:', error);
     showStatusMessage('エラーが発生しました。', 'error');
