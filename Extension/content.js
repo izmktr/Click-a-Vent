@@ -39,6 +39,7 @@ function startSelectionMode(fields) {
   updateInfoBox();
   
   // イベントリスナーの追加
+  document.addEventListener('mousemove', handleMouseMove, true);
   document.addEventListener('mouseover', handleMouseOver, true);
   document.addEventListener('mouseout', handleMouseOut, true);
   document.addEventListener('click', handleClick, true);
@@ -50,6 +51,7 @@ function endSelectionMode() {
   selectionActive = false;
   
   // イベントリスナーの削除
+  document.removeEventListener('mousemove', handleMouseMove, true);
   document.removeEventListener('mouseover', handleMouseOver, true);
   document.removeEventListener('mouseout', handleMouseOut, true);
   document.removeEventListener('click', handleClick, true);
@@ -99,18 +101,19 @@ function createInfoBox() {
   infoBox.style.cssText = `
     position: fixed;
     top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 20px;
     background: white;
-    padding: 20px;
+    padding: 15px 20px;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 999999;
     font-family: 'Segoe UI', Arial, sans-serif;
     font-size: 16px;
     color: #333;
-    min-width: 300px;
+    min-width: 280px;
     text-align: center;
+    pointer-events: none;
+    transition: top 0.2s ease, left 0.2s ease;
   `;
   document.body.appendChild(infoBox);
 }
@@ -137,6 +140,40 @@ function updateInfoBox() {
       ESCでキャンセル
     </div>
   `;
+}
+
+// マウス移動処理（情報ボックスの位置調整）
+function handleMouseMove(e) {
+  if (!selectionActive || !infoBox) return;
+  
+  const margin = 20;
+  const boxWidth = 280;
+  const boxHeight = 100;
+  
+  // カーソル位置を取得
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
+  
+  // 画面の右半分にカーソルがある場合は左側に、左半分の場合は右側に配置
+  let left, top;
+  
+  if (mouseX > window.innerWidth / 2) {
+    // カーソルが右側 → ボックスを左上に
+    left = margin;
+  } else {
+    // カーソルが左側 → ボックスを右上に
+    left = window.innerWidth - boxWidth - margin;
+  }
+  
+  // 上半分なら下に、下半分なら上に
+  if (mouseY > window.innerHeight / 2) {
+    top = margin;
+  } else {
+    top = window.innerHeight - boxHeight - margin;
+  }
+  
+  infoBox.style.left = left + 'px';
+  infoBox.style.top = top + 'px';
 }
 
 // マウスオーバー処理
