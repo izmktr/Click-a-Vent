@@ -98,10 +98,15 @@ function createOverlay() {
 function createInfoBox() {
   infoBox = document.createElement('div');
   infoBox.id = 'click-a-vent-info';
+  
+  // 画面中央（左右）の位置を計算
+  const boxWidth = 260;
+  const left = `calc(50% - ${boxWidth / 2}px)`;
+  
   infoBox.style.cssText = `
     position: fixed;
     top: 10px;
-    left: 10px;
+    left: ${left};
     background: white;
     padding: 12px 16px;
     border-radius: 8px;
@@ -110,7 +115,7 @@ function createInfoBox() {
     font-family: 'Segoe UI', Arial, sans-serif;
     font-size: 14px;
     color: #333;
-    width: 260px;
+    width: ${boxWidth}px;
     max-width: calc(100vw - 40px);
     text-align: center;
     pointer-events: none;
@@ -152,43 +157,33 @@ function handleMouseMove(e) {
   const boxHeight = 90;
   
   // カーソル位置を取得
-  const mouseX = e.clientX;
   const mouseY = e.clientY;
   
   // 現在のボックス位置を取得
-  const currentLeft = parseInt(infoBox.style.left) || margin;
   const currentTop = parseInt(infoBox.style.top) || margin;
   
-  // ボックスの矩形範囲を計算
+  // ボックスの矩形範囲を計算（Y座標のみチェック）
   const boxRect = {
-    left: currentLeft,
     top: currentTop,
-    right: currentLeft + boxWidth,
     bottom: currentTop + boxHeight
   };
   
-  // カーソルがボックスと重なっているかチェック
-  const isOverlapping = mouseX >= boxRect.left && mouseX <= boxRect.right &&
-                        mouseY >= boxRect.top && mouseY <= boxRect.bottom;
+  // カーソルがボックスと重なっているかチェック（Y座標のみ）
+  const isOverlapping = mouseY >= boxRect.top && mouseY <= boxRect.bottom;
   
   // 重なっている場合のみ移動
   if (!isOverlapping) return;
   
-  // 画面の右半分にカーソルがある場合は左側に、左半分の場合は右側に配置
-  let left, top;
-  
-  if (mouseX > window.innerWidth / 2) {
-    // カーソルが右側 → ボックスを左上に
-    left = margin;
-  } else {
-    // カーソルが左側 → ボックスを右側に（画面内に収まるように）
-    left = Math.max(margin, window.innerWidth - boxWidth - margin);
-  }
+  // 画面中央（左右）に固定
+  const left = (window.innerWidth - boxWidth) / 2;
   
   // 上半分なら下に、下半分なら上に
+  let top;
   if (mouseY > window.innerHeight / 2) {
+    // カーソルが下半分 → ボックスを上部に
     top = margin;
   } else {
+    // カーソルが上半分 → ボックスを下部に
     top = Math.max(margin, window.innerHeight - boxHeight - margin);
   }
   
