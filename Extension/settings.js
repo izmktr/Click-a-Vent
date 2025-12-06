@@ -458,8 +458,18 @@ async function addToAutoConfig(index) {
   
   if (!item) return;
   
-  // 自動設定タブに切り替え
-  document.querySelector('[data-tab="auto-config"]').click();
+  // 自動設定タブに切り替え（確実に実行）
+  const autoConfigTab = document.querySelector('[data-tab="auto-config"]');
+  const allTabButtons = document.querySelectorAll('.tab-btn');
+  const allTabContents = document.querySelectorAll('.tab-content');
+  
+  // すべてのタブから active を削除
+  allTabButtons.forEach(b => b.classList.remove('active'));
+  allTabContents.forEach(c => c.classList.remove('active'));
+  
+  // 自動設定タブを active に
+  autoConfigTab.classList.add('active');
+  document.getElementById('auto-config').classList.add('active');
   
   // 新規モードに設定
   handleNewConfig();
