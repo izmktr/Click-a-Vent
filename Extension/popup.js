@@ -18,6 +18,7 @@ const showSetupGuideBtn = document.getElementById('show-setup-guide');
 const selectFromPageBtn = document.getElementById('select-from-page-btn');
 const registerBtn = document.getElementById('register-btn');
 const closeMainBtn = document.getElementById('close-main-btn');
+const openCalendarBtn = document.getElementById('open-calendar-btn');
 const settingsBtn = document.getElementById('settings-btn');
 const helpBtn = document.getElementById('help-btn');
 
@@ -49,6 +50,7 @@ function setupEventListeners() {
   showSetupGuideBtn.addEventListener('click', showSetupGuide);
   selectFromPageBtn.addEventListener('click', handleSelectFromPage);
   registerBtn.addEventListener('click', handleRegister);
+  openCalendarBtn.addEventListener('click', handleOpenCalendar);
   settingsBtn.addEventListener('click', handleSettings);
   helpBtn.addEventListener('click', handleHelp);
   
@@ -320,12 +322,17 @@ async function handleRegister() {
     showStatusMessage('エラーが発生しました。', 'error');
   }
 }
-
 // 設定ボタン
 function handleSettings() {
   alert('設定機能は今後追加予定です。');
 }
 
+// Googleカレンダーを開く
+function handleOpenCalendar() {
+  chrome.tabs.create({ url: 'https://calendar.google.com' });
+}
+
+// ヘルプボタン
 // ヘルプボタン
 function handleHelp() {
   const helpText = `【使い方】
