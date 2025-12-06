@@ -19,6 +19,7 @@ const helpBtn = document.getElementById('help-btn');
 
 const eventNameInput = document.getElementById('event-name');
 const eventDateInput = document.getElementById('event-date');
+const eventEndDateInput = document.getElementById('event-end-date');
 const eventLocationInput = document.getElementById('event-location');
 
 let selectedDurationMinutes = 60; // デフォルトは1時間
@@ -54,12 +55,33 @@ function setupEventListeners() {
     btn.addEventListener('click', (e) => {
       // すべてのボタンからactiveクラスを削除
       durationButtons.forEach(b => b.classList.remove('active'));
+      // カスタム入力をクリア
+      document.getElementById('custom-duration').value = '';
       // クリックされたボタンにactiveクラスを追加
       e.target.classList.add('active');
       // 選択された時間を保存
       selectedDurationMinutes = parseInt(e.target.dataset.minutes);
+      updateEndDateTime();
     });
   });
+  
+  // カスタム時間入力のイベントリスナー
+  const customDurationInput = document.getElementById('custom-duration');
+  customDurationInput.addEventListener('input', (e) => {
+    const minutes = parseDurationString(e.target.value);
+    if (minutes !== null) {
+      // すべてのボタンからactiveクラスを削除
+      durationButtons.forEach(b => b.classList.remove('active'));
+      selectedDurationMinutes = minutes;
+      updateEndDateTime();
+    }
+  });
+  
+  // 開始日時変更時に終了日時を更新
+  eventDateInput.addEventListener('change', updateEndDateTime);
+  
+  // 終了日時直接入力時のイベントリスナー
+  eventEndDateInput.addEventListener('change', handleEndDateChange);
 }
 
 // 画面表示の切り替え
@@ -142,9 +164,17 @@ async function handleRegister() {
       return;
     }
 
-    // 終了時刻の計算（選択された経過時間を追加）
-    const startDate = new Date(eventDate);
-    const endDate = new Date(startDate.getTime() + selectedDurationMinutes * 60 * 1000);
+    // 終了日時の取得（直接入力されている場合はそれを使用）
+    const endDateTime = eventEndDateInput.value;
+    let endDate;
+    
+    if (endDateTime) {
+      endDate = new Date(endDateTime);
+    } else {
+      // 終了日時が入力されていない場合は選択された経過時間を使用
+      const startDate = new Date(eventDate);
+      endDate = new Date(startDate.getTime() + selectedDurationMinutes * 60 * 1000);
+    }
 
     // Googleカレンダーの日時フォーマット（YYYYMMDDTHHmmss形式）
     const formatGoogleDate = (date) => {
@@ -156,6 +186,8 @@ async function handleRegister() {
       const seconds = '00';
       return `${year}${month}${day}T${hours}${minutes}${seconds}`;
     };
+    
+    const startDate = new Date(eventDate);
 
     // GoogleカレンダーのURLを構築
     const calendarUrl = new URL('https://calendar.google.com/calendar/render');
@@ -230,12 +262,102 @@ function showStatusMessage(message, type = 'info') {
   const actionSection = document.querySelector('.action-section');
   mainScreen.insertBefore(messageDiv, actionSection);
 
-  // 3秒後に自動削除
-  setTimeout(() => {
-    if (messageDiv.parentNode) {
-      messageDiv.remove();
+  setTimeout(() => messageDiv.remove(), 3000);
+}
+
+// 時間文字列をパース（例: "2h30m", "0.5h", "30m", "1d"）
+function parseDurationString(str) {
+  if (!str || !str.trim()) return null;
+  
+  let totalMinutes = 0;
+  // 数値+単位のパターンにマッチ (整数または小数)
+  const regex = /(\d+\.?\d*)\s*([smhd])/gi;
+  let match;
+  
+  while ((match = regex.exec(str)) !== null) {
+    const value = parseFloat(match[1]);
+    const unit = match[2].toLowerCase();
+    
+    switch (unit) {
+      case 's': // 秒
+        totalMinutes += value / 60;
+        break;
+      case 'm': // 分
+        totalMinutes += value;
+        break;
+      case 'h': // 時
+        totalMinutes += value * 60;
+        break;
+      case 'd': // 日
+        totalMinutes += value * 60 * 24;
+        break;
     }
-  }, 3000);
+  }
+  
+  return totalMinutes > 0 ? Math.round(totalMinutes) : null;
+}
+
+// 終了日時を更新
+function updateEndDateTime() {
+  const startDateTime = eventDateInput.value;
+  
+  if (!startDateTime) {
+    eventEndDateInput.value = '';
+    return;
+  }
+  
+  const startDate = new Date(startDateTime);
+  const endDate = new Date(startDate.getTime() + selectedDurationMinutes * 60 * 1000);
+  
+  // datetime-local形式でフォーマット (YYYY-MM-DDTHH:MM)
+  const year = endDate.getFullYear();
+  const month = String(endDate.getMonth() + 1).padStart(2, '0');
+  const day = String(endDate.getDate()).padStart(2, '0');
+  const hours = String(endDate.getHours()).padStart(2, '0');
+  const minutes = String(endDate.getMinutes()).padStart(2, '0');
+  
+  eventEndDateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// 終了日時が直接変更された時の処理
+function handleEndDateChange() {
+  const startDateTime = eventDateInput.value;
+  const endDateTime = eventEndDateInput.value;
+  
+  if (!startDateTime || !endDateTime) return;
+  
+  const startDate = new Date(startDateTime);
+  const endDate = new Date(endDateTime);
+  
+  // 経過時間を分単位で計算
+  const diffMinutes = Math.round((endDate - startDate) / (1000 * 60));
+  
+  // 対応するボタンがあるか確認
+  const durationButtons = document.querySelectorAll('.duration-btn');
+  let foundButton = false;
+  
+  durationButtons.forEach(btn => {
+    const btnMinutes = parseInt(btn.dataset.minutes);
+    if (btnMinutes === diffMinutes) {
+      // すべてのボタンからactiveクラスを削除
+      durationButtons.forEach(b => b.classList.remove('active'));
+      // 対応するボタンを選択
+      btn.classList.add('active');
+      foundButton = true;
+      selectedDurationMinutes = diffMinutes;
+      // カスタム入力をクリア
+      document.getElementById('custom-duration').value = '';
+    }
+  });
+  
+  // 対応するボタンがない場合
+  if (!foundButton) {
+    // すべてのボタンからactiveクラスを削除
+    durationButtons.forEach(b => b.classList.remove('active'));
+    selectedDurationMinutes = diffMinutes;
+    // カスタム入力にも表示しない（直接入力されたため）
+    document.getElementById('custom-duration').value = '';
+  }
 }
 
 // 選択されたデータをフォームに読み込む
@@ -247,6 +369,8 @@ async function loadSelectedData(data, showMessage = true) {
     // 日付・時刻テキストをISO形式に変換
     const parsedDateTime = await parseDateTimeText(data.dateTime);
     eventDateInput.value = parsedDateTime;
+    // 終了日時を更新
+    updateEndDateTime();
   }
   if (data.location) {
     eventLocationInput.value = data.location;

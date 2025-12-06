@@ -71,6 +71,10 @@ h2 {
   cursor: default;
 }
 
+.auto-config-indicator img {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(93%) saturate(3490%) hue-rotate(346deg) brightness(92%) contrast(90%);
+}
+
 .auto-config-indicator:hover {
   background-color: transparent;
 }
@@ -196,6 +200,17 @@ h2 {
 }
 
 /* 終了時刻ボタン */
+.end-datetime-display {
+  padding: 10px;
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
 .duration-buttons {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -212,6 +227,26 @@ h2 {
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.duration-input {
+  padding: 8px 12px;
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.duration-input::placeholder {
+  color: #ccc;
+  opacity: 1;
+}
+
+.duration-input:focus::placeholder {
+  color: transparent;
 }
 
 .duration-btn:hover {
