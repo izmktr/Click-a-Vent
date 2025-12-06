@@ -154,6 +154,25 @@ function handleMouseMove(e) {
   const mouseX = e.clientX;
   const mouseY = e.clientY;
   
+  // 現在のボックス位置を取得
+  const currentLeft = parseInt(infoBox.style.left) || margin;
+  const currentTop = parseInt(infoBox.style.top) || margin;
+  
+  // ボックスの矩形範囲を計算
+  const boxRect = {
+    left: currentLeft,
+    top: currentTop,
+    right: currentLeft + boxWidth,
+    bottom: currentTop + boxHeight
+  };
+  
+  // カーソルがボックスと重なっているかチェック
+  const isOverlapping = mouseX >= boxRect.left && mouseX <= boxRect.right &&
+                        mouseY >= boxRect.top && mouseY <= boxRect.bottom;
+  
+  // 重なっている場合のみ移動
+  if (!isOverlapping) return;
+  
   // 画面の右半分にカーソルがある場合は左側に、左半分の場合は右側に配置
   let left, top;
   
