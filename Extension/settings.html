@@ -78,10 +78,15 @@
       </p>
       
       <div class="format-section">
-        <label for="date-format-input">日付フォーマット（1行に1つ）</label>
+        <label for="date-format-input">日付フォーマット(1行に1つ)</label>
         <textarea id="date-format-input" rows="10" placeholder="%Y年%M月%D日
 %M月%D日
-%M/%D"></textarea>
+%Y/%M/%D
+%M/%D
+%Y-%M-%D
+%M-%D
+%Y.%M.%D
+%M.%D"></textarea>
         
         <div class="button-group">
           <button id="test-date-btn" class="secondary-btn">テスト</button>
@@ -97,7 +102,7 @@
       <h2>時刻フォーマット設定</h2>
       <p class="description">
         テキストから時刻を抽出するフォーマットを設定します。<br>
-        %H=時、%M=分（小文字も可、分は省略可）<br>
+        %H=時、%M=分、%P=午前/午後（小文字も可、分は省略可）<br>
         上から順にマッチし、最初にマッチしたフォーマットが使用されます。
       </p>
       
@@ -105,6 +110,8 @@
         <label for="time-format-input">時刻フォーマット（1行に1つ）</label>
         <textarea id="time-format-input" rows="10" placeholder="%H:%M
 %H：%M
+%P%H時%M分
+%P%H時
 %H時%M分
 %H時"></textarea>
         

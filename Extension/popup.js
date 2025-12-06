@@ -310,9 +310,10 @@ function extractTimeFromText(text, formatList) {
   if (!text) return null;
   
   for (const format of formatList) {
-    // %H, %M を正規表現パターンに変換
+    // %P, %H, %M を正規表現パターンに変換
     let pattern = format
       .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // 特殊文字をエスケープ
+      .replace(/%P/g, '(午前|午後)') // 午前/午後
       .replace(/%H/g, '(\\d{1,2})') // 時: 1-2桁の数字
       .replace(/%M/g, '(\\d{1,2})'); // 分: 1-2桁の数字
     
@@ -320,19 +321,31 @@ function extractTimeFromText(text, formatList) {
     const match = text.match(regex);
     
     if (match) {
-      // フォーマットから時分の位置を判定
-      const formatParts = format.match(/%[HM]/g) || [];
+      // フォーマットから午前/午後・時分の位置を判定
+      const formatParts = format.match(/%[PHM]/g) || [];
       const result = {};
       
       formatParts.forEach((part, index) => {
+        if (part === '%P') result.period = match[index + 1];
         if (part === '%H') result.hour = match[index + 1];
         if (part === '%M') result.minute = match[index + 1];
       });
       
       // 時刻を返す
       if (result.hour !== undefined) {
+        let hour = parseInt(result.hour);
+        
+        // 午後の場合は12時間を加算（12時台はそのまま）
+        if (result.period === '午後' && hour < 12) {
+          hour += 12;
+        }
+        // 午前12時は0時に変換
+        if (result.period === '午前' && hour === 12) {
+          hour = 0;
+        }
+        
         return {
-          hour: result.hour.padStart(2, '0'),
+          hour: hour.toString().padStart(2, '0'),
           minute: (result.minute || '00').padStart(2, '0')
         };
       }
