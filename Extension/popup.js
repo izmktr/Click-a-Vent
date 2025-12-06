@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   showMainScreen();
   setupEventListeners();
   
+  // 自動設定のチェックと適用
+  await checkAndApplyAutoConfig();
+  
   // storageから選択されたデータを取得
   const result = await chrome.storage.local.get(['selectedData']);
   if (result.selectedData) {
@@ -371,5 +374,81 @@ async function parseDateTimeText(dateTimeText) {
   } catch (error) {
     console.error('日付・時刻の解析エラー:', error);
     return dateTimeText;
+  }
+}
+
+// 自動設定のチェックと適用
+async function checkAndApplyAutoConfig() {
+  try {
+    // 現在のタブのURLを取得
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.url) return;
+    
+    const currentUrl = tab.url;
+    
+    // chrome:// や edge:// などの特殊なURLはスキップ
+    if (currentUrl.startsWith('chrome://') || currentUrl.startsWith('edge://') || currentUrl.startsWith('about:')) {
+      return;
+    }
+    
+    // 自動設定を取得
+    const settings = await chrome.storage.sync.get(['autoConfigs']);
+    const autoConfigs = settings.autoConfigs || [];
+    
+    if (autoConfigs.length === 0) return;
+    
+    // URLが前方一致する設定を検索
+    const matchedConfig = autoConfigs.find(config => currentUrl.startsWith(config.url));
+    
+    if (!matchedConfig) return;
+    
+    // マッチした設定を使ってページから情報を取得
+    await applyAutoConfig(tab, matchedConfig);
+    
+  } catch (error) {
+    console.error('自動設定の適用エラー:', error);
+  }
+}
+
+// 自動設定を適用してページから情報を取得
+async function applyAutoConfig(tab, config) {
+  try {
+    // コンテンツスクリプトが既に注入されているか確認
+    try {
+      await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+    } catch (error) {
+      // コンテンツスクリプトが注入されていない場合は注入する
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content.js']
+      });
+      await chrome.scripting.insertCSS({
+        target: { tabId: tab.id },
+        files: ['content.css']
+      });
+      // 少し待機
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // XPathを使ってページから情報を取得
+    const result = await chrome.tabs.sendMessage(tab.id, {
+      action: 'extractByXPath',
+      xpaths: {
+        eventName: config.eventXPath,
+        dateTime: config.dateTimeXPath,
+        location: config.locationXPath
+      }
+    });
+    
+    if (result && result.success) {
+      // 取得したデータをフォームに設定
+      await loadSelectedData(result.data);
+      
+      // 成功メッセージを表示
+      const urlShort = config.url.length > 50 ? config.url.substring(0, 50) + '...' : config.url;
+      showStatusMessage(`${urlShort} のデータをセットしました`, 'success');
+    }
+  } catch (error) {
+    console.error('自動設定の適用エラー:', error);
   }
 }

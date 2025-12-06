@@ -22,6 +22,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
   
+  if (request.action === 'extractByXPath') {
+    // XPathを使って要素からテキストを抽出
+    const data = extractDataByXPath(request.xpaths);
+    sendResponse({ success: true, data: data });
+    return true;
+  }
+  
   return true;
 });
 // 選択モードの開始
@@ -400,4 +407,54 @@ function getElementText(element) {
   }
   
   return text.trim();
+}
+
+// XPathを使ってページからデータを抽出
+function extractDataByXPath(xpaths) {
+  const data = {};
+  
+  // イベント名を取得
+  if (xpaths.eventName) {
+    const element = getElementByXPath(xpaths.eventName);
+    if (element) {
+      data.eventName = getElementText(element);
+    }
+  }
+  
+  // 日時を取得
+  if (xpaths.dateTime) {
+    const element = getElementByXPath(xpaths.dateTime);
+    if (element) {
+      data.dateTime = getElementText(element);
+    }
+  }
+  
+  // 場所を取得
+  if (xpaths.location) {
+    const element = getElementByXPath(xpaths.location);
+    if (element) {
+      data.location = getElementText(element);
+    }
+  }
+  
+  return data;
+}
+
+// XPathで要素を取得
+function getElementByXPath(xpath) {
+  if (!xpath) return null;
+  
+  try {
+    const result = document.evaluate(
+      xpath,
+      document,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    );
+    return result.singleNodeValue;
+  } catch (error) {
+    console.error('XPath評価エラー:', error);
+    return null;
+  }
 }
