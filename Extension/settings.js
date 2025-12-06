@@ -475,10 +475,10 @@ function createHistoryItem(item, index) {
       <div class="history-url">${item.url}</div>
       <div class="history-event">${item.eventName || '(なし)'}</div>
       <div style="display: flex; flex-direction: column; gap: 6px;">
-        <button class="history-add-btn" onclick="addToAutoConfig(${index})">
+        <button class="history-add-btn" data-index="${index}">
           自動設定に追加
         </button>
-        <button class="history-delete-btn" onclick="deleteHistory(${index})" title="この履歴を削除">
+        <button class="history-delete-btn" data-index="${index}" title="この履歴を削除">
           削除
         </button>
       </div>
@@ -501,6 +501,22 @@ function createHistoryItem(item, index) {
       </div>
     </div>
   `;
+  
+  // ボタンのイベントリスナーを追加
+  const addBtn = div.querySelector('.history-add-btn');
+  const deleteBtn = div.querySelector('.history-delete-btn');
+  
+  addBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const index = parseInt(e.target.dataset.index);
+    addToAutoConfig(index);
+  });
+  
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const index = parseInt(e.target.dataset.index);
+    deleteHistory(index);
+  });
   
   // ヘッダークリックで展開/折りたたみ
   div.querySelector('.history-header').addEventListener('click', (e) => {
@@ -641,7 +657,3 @@ async function deleteHistory(index) {
     alert('削除に失敗しました。');
   }
 }
-
-// グローバルに公開
-window.addToAutoConfig = addToAutoConfig;
-window.deleteHistory = deleteHistory;
