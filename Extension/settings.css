@@ -371,6 +371,21 @@ header h1 {
   background-color: #1557b0;
 }
 
+.history-delete-btn {
+  padding: 8px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.history-delete-btn:hover {
+  background-color: #c82333;
+}
+
 .history-details {
   padding: 15px;
   background-color: white;

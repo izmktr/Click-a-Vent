@@ -311,13 +311,41 @@ async function testDateFormat() {
   
   if (history.length === 0) {
     result.className = 'test-result show error';
-    result.textContent = 'テスト用の履歴データがありません。';
+    result.innerHTML = 'テスト用の履歴データがありません。';
     return;
   }
   
-  // テスト実行（簡易版）
+  // フォーマットリストを取得
+  const formatList = formats.split('\n').filter(f => f.trim());
+  
+  // テスト結果を生成
+  let html = '<div style="max-height: 400px; overflow-y: auto;">';
+  html += '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
+  html += '<thead><tr style="background: #f5f5f5; position: sticky; top: 0;">';
+  html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">URL</th>';
+  html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">日時テキスト</th>';
+  html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">抽出した日付</th>';
+  html += '</tr></thead><tbody>';
+  
+  // 最大10件まで表示
+  const testHistory = history.slice(0, 10);
+  
+  testHistory.forEach(item => {
+    const extractedDate = extractDateFromText(item.dateTime || '', formatList);
+    const urlShort = item.url.length > 50 ? item.url.substring(0, 50) + '...' : item.url;
+    
+    html += '<tr>';
+    html += `<td style="padding: 8px; border: 1px solid #ddd; font-size: 11px;" title="${item.url}">${urlShort}</td>`;
+    html += `<td style="padding: 8px; border: 1px solid #ddd;">${item.dateTime || '(なし)'}</td>`;
+    html += `<td style="padding: 8px; border: 1px solid #ddd; ${extractedDate ? 'color: #1a73e8; font-weight: bold;' : 'color: #999;'}">${extractedDate || '抽出失敗'}</td>`;
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table></div>';
+  html += `<div style="margin-top: 10px; font-size: 12px; color: #666;">※ 最新10件の履歴でテストしました（全${history.length}件）</div>`;
+  
   result.className = 'test-result show success';
-  result.textContent = `${history.length}件の履歴に対してテストを実行しました。`;
+  result.innerHTML = html;
 }
 
 // 日付フォーマットの保存
@@ -344,12 +372,41 @@ async function testTimeFormat() {
   
   if (history.length === 0) {
     result.className = 'test-result show error';
-    result.textContent = 'テスト用の履歴データがありません。';
+    result.innerHTML = 'テスト用の履歴データがありません。';
     return;
   }
   
+  // フォーマットリストを取得
+  const formatList = formats.split('\n').filter(f => f.trim());
+  
+  // テスト結果を生成
+  let html = '<div style="max-height: 400px; overflow-y: auto;">';
+  html += '<table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
+  html += '<thead><tr style="background: #f5f5f5; position: sticky; top: 0;">';
+  html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">URL</th>';
+  html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">日時テキスト</th>';
+  html += '<th style="padding: 8px; border: 1px solid #ddd; text-align: left;">抽出した時刻</th>';
+  html += '</tr></thead><tbody>';
+  
+  // 最大10件まで表示
+  const testHistory = history.slice(0, 10);
+  
+  testHistory.forEach(item => {
+    const extractedTime = extractTimeFromText(item.dateTime || '', formatList);
+    const urlShort = item.url.length > 50 ? item.url.substring(0, 50) + '...' : item.url;
+    
+    html += '<tr>';
+    html += `<td style="padding: 8px; border: 1px solid #ddd; font-size: 11px;" title="${item.url}">${urlShort}</td>`;
+    html += `<td style="padding: 8px; border: 1px solid #ddd;">${item.dateTime || '(なし)'}</td>`;
+    html += `<td style="padding: 8px; border: 1px solid #ddd; ${extractedTime ? 'color: #1a73e8; font-weight: bold;' : 'color: #999;'}">${extractedTime || '抽出失敗'}</td>`;
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table></div>';
+  html += `<div style="margin-top: 10px; font-size: 12px; color: #666;">※ 最新10件の履歴でテストしました（全${history.length}件）</div>`;
+  
   result.className = 'test-result show success';
-  result.textContent = `${history.length}件の履歴に対してテストを実行しました。`;
+  result.innerHTML = html;
 }
 
 // 時刻フォーマットの保存
@@ -417,9 +474,14 @@ function createHistoryItem(item, index) {
       </div>
       <div class="history-url">${item.url}</div>
       <div class="history-event">${item.eventName || '(なし)'}</div>
-      <button class="history-add-btn" onclick="addToAutoConfig(${index})">
-        自動設定に追加
-      </button>
+      <div style="display: flex; gap: 8px;">
+        <button class="history-add-btn" onclick="addToAutoConfig(${index})">
+          自動設定に追加
+        </button>
+        <button class="history-delete-btn" onclick="deleteHistory(${index})" title="この履歴を削除">
+          削除
+        </button>
+      </div>
     </div>
     <div class="history-details">
       <div class="detail-row">
@@ -484,5 +546,102 @@ async function addToAutoConfig(index) {
   handleFormInput({ target: document.getElementById('config-url') });
 }
 
+// テキストから日付を抽出
+function extractDateFromText(text, formatList) {
+  if (!text) return null;
+  
+  for (const format of formatList) {
+    // %Y, %M, %D をそれぞれ正規表現パターンに変換
+    let pattern = format
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // 特殊文字をエスケープ
+      .replace(/%Y/g, '(\\d{4})') // 年: 4桁の数字
+      .replace(/%M/g, '(\\d{1,2})') // 月: 1-2桁の数字
+      .replace(/%D/g, '(\\d{1,2})'); // 日: 1-2桁の数字
+    
+    const regex = new RegExp(pattern);
+    const match = text.match(regex);
+    
+    if (match) {
+      // フォーマットから年月日の位置を判定
+      const formatParts = format.match(/%[YMD]/g) || [];
+      const result = {};
+      
+      formatParts.forEach((part, index) => {
+        if (part === '%Y') result.year = match[index + 1];
+        if (part === '%M') result.month = match[index + 1];
+        if (part === '%D') result.day = match[index + 1];
+      });
+      
+      // 年が取得できた場合は年月日形式、そうでなければ月日形式
+      if (result.year) {
+        return `${result.year}/${result.month?.padStart(2, '0')}/${result.day?.padStart(2, '0')}`;
+      } else if (result.month && result.day) {
+        return `${result.month}/${result.day}`;
+      }
+    }
+  }
+  
+  return null;
+}
+
+// テキストから時刻を抽出
+function extractTimeFromText(text, formatList) {
+  if (!text) return null;
+  
+  for (const format of formatList) {
+    // %H, %M を正規表現パターンに変換
+    let pattern = format
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // 特殊文字をエスケープ
+      .replace(/%H/g, '(\\d{1,2})') // 時: 1-2桁の数字
+      .replace(/%M/g, '(\\d{1,2})'); // 分: 1-2桁の数字
+    
+    const regex = new RegExp(pattern);
+    const match = text.match(regex);
+    
+    if (match) {
+      // フォーマットから時分の位置を判定
+      const formatParts = format.match(/%[HM]/g) || [];
+      const result = {};
+      
+      formatParts.forEach((part, index) => {
+        if (part === '%H') result.hour = match[index + 1];
+        if (part === '%M') result.minute = match[index + 1];
+      });
+      
+      // 時刻を整形
+      if (result.hour) {
+        const hour = result.hour.padStart(2, '0');
+        const minute = (result.minute || '00').padStart(2, '0');
+        return `${hour}:${minute}`;
+      }
+    }
+  }
+  
+  return null;
+}
+
+// 履歴を削除
+async function deleteHistory(index) {
+  if (!confirm('この履歴を削除しますか？')) return;
+  
+  try {
+    const data = await chrome.storage.local.get(['eventHistory']);
+    let history = data.eventHistory || [];
+    
+    // 指定されたインデックスの履歴を削除
+    history.splice(index, 1);
+    
+    // 保存
+    await chrome.storage.local.set({ eventHistory: history });
+    
+    // 再描画
+    await loadHistory();
+  } catch (error) {
+    console.error('履歴の削除エラー:', error);
+    alert('削除に失敗しました。');
+  }
+}
+
 // グローバルに公開
 window.addToAutoConfig = addToAutoConfig;
+window.deleteHistory = deleteHistory;
