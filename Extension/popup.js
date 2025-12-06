@@ -239,7 +239,7 @@ function showStatusMessage(message, type = 'info') {
 }
 
 // 選択されたデータをフォームに読み込む
-async function loadSelectedData(data) {
+async function loadSelectedData(data, showMessage = true) {
   if (data.eventName) {
     eventNameInput.value = data.eventName;
   }
@@ -252,7 +252,9 @@ async function loadSelectedData(data) {
     eventLocationInput.value = data.location;
   }
   
-  showStatusMessage('ページから情報を取得しました！', 'success');
+  if (showMessage) {
+    showStatusMessage('ページから情報を取得しました！', 'success');
+  }
 }
 
 // コンテンツスクリプトからのメッセージを受信
@@ -298,6 +300,36 @@ function extractDateFromText(text, formatList) {
           month: result.month.padStart(2, '0'),
           day: result.day.padStart(2, '0')
         };
+      }
+      
+      // 年がない場合は現在の年を使用し、3ヶ月以上過去なら来年にする
+      if (!result.year && result.month && result.day) {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const month = parseInt(result.month);
+        const day = parseInt(result.day);
+        
+        // 現在の年で日付を作成
+        const targetDate = new Date(currentYear, month - 1, day);
+        
+        // 現在の日付との差を計算（ミリ秒）
+        const diffMs = now - targetDate;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        
+        // 3ヶ月（約90日）以上過去の場合は来年の日付とする
+        if (diffDays > 90) {
+          return {
+            year: (currentYear + 1).toString(),
+            month: result.month.padStart(2, '0'),
+            day: result.day.padStart(2, '0')
+          };
+        } else {
+          return {
+            year: currentYear.toString(),
+            month: result.month.padStart(2, '0'),
+            day: result.day.padStart(2, '0')
+          };
+        }
       }
     }
   }
@@ -454,14 +486,50 @@ async function applyAutoConfig(tab, config) {
     });
     
     if (result && result.success) {
-      // 取得したデータをフォームに設定
-      await loadSelectedData(result.data);
+      // 取得したデータをフォームに設定（自動設定の場合はメッセージを表示しない）
+      await loadSelectedData(result.data, false);
       
-      // 成功メッセージを表示
-      const urlShort = config.url.length > 50 ? config.url.substring(0, 50) + '...' : config.url;
-      showStatusMessage(`${urlShort} のデータをセットしました`, 'success');
+      // 自動設定インジケーターを表示
+      showAutoConfigIndicator(config, result.data);
     }
   } catch (error) {
     console.error('自動設定の適用エラー:', error);
   }
+}
+
+// 自動設定インジケーターを表示
+function showAutoConfigIndicator(config, data) {
+  const indicator = document.getElementById('auto-config-indicator');
+  const tooltip = document.getElementById('auto-config-tooltip');
+  
+  if (!indicator || !tooltip) return;
+  
+  // ツールチップの内容を作成
+  let tooltipContent = `<div class="tooltip-row"><span class="tooltip-label">URL:</span> ${config.url}</div>`;
+  
+  if (data.eventName) {
+    tooltipContent += `<div class="tooltip-row"><span class="tooltip-label">タイトル:</span> ${data.eventName}</div>`;
+  }
+  
+  if (data.dateTime) {
+    tooltipContent += `<div class="tooltip-row"><span class="tooltip-label">開始日時:</span> ${data.dateTime}</div>`;
+  }
+  
+  if (data.location) {
+    tooltipContent += `<div class="tooltip-row"><span class="tooltip-label">場所:</span> ${data.location}</div>`;
+  }
+  
+  tooltip.innerHTML = tooltipContent;
+  
+  // インジケーターを表示
+  indicator.classList.remove('hidden');
+  
+  // マウスオーバーでツールチップを表示
+  indicator.addEventListener('mouseenter', () => {
+    tooltip.classList.remove('hidden');
+  });
+  
+  indicator.addEventListener('mouseleave', () => {
+    tooltip.classList.add('hidden');
+  });
 }

@@ -4,8 +4,8 @@ let selectedConfigIndex = -1;
 let isNewMode = true;
 
 // デフォルト設定
-const DEFAULT_DATE_FORMATS = '%Y年%M月%D日\n%M月%D日\n%M/%D';
-const DEFAULT_TIME_FORMATS = '%H:%M\n%H：%M\n%H時%M分\n%H時';
+const DEFAULT_DATE_FORMATS = '%Y年%M月%D日\n%M月%D日\n%Y/%M/%D\n%M/%D\n%Y-%M-%D\n%M-%D\n%Y.%M.%D\n%M.%D';
+const DEFAULT_TIME_FORMATS = '%H:%M\n%H：%M\n%P%H時%M分\n%P%H時\n%H時%M分\n%H時\n%H.%M\n%H-%M';
 
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
@@ -55,6 +55,7 @@ function setupEventListeners() {
     document.getElementById('save-date-btn').disabled = false;
   });
   document.getElementById('test-date-btn').addEventListener('click', testDateFormat);
+  document.getElementById('reset-date-btn').addEventListener('click', resetDateFormat);
   document.getElementById('save-date-btn').addEventListener('click', saveDateFormat);
   
   // 時刻設定
@@ -62,6 +63,7 @@ function setupEventListeners() {
     document.getElementById('save-time-btn').disabled = false;
   });
   document.getElementById('test-time-btn').addEventListener('click', testTimeFormat);
+  document.getElementById('reset-time-btn').addEventListener('click', resetTimeFormat);
   document.getElementById('save-time-btn').addEventListener('click', saveTimeFormat);
 }
 
@@ -362,6 +364,21 @@ async function saveDateFormat() {
   }
 }
 
+// 日付フォーマットをデフォルトにリセット
+async function resetDateFormat() {
+  if (!confirm('日付フォーマットをデフォルトに戻しますか？')) return;
+  
+  try {
+    document.getElementById('date-format-input').value = DEFAULT_DATE_FORMATS;
+    await chrome.storage.sync.set({ dateFormats: DEFAULT_DATE_FORMATS });
+    alert('日付フォーマットをデフォルトに戻しました。');
+    document.getElementById('save-date-btn').disabled = true;
+  } catch (error) {
+    console.error('リセットエラー:', error);
+    alert('リセットに失敗しました。');
+  }
+}
+
 // 時刻フォーマットのテスト
 async function testTimeFormat() {
   const formats = document.getElementById('time-format-input').value;
@@ -420,6 +437,21 @@ async function saveTimeFormat() {
   } catch (error) {
     console.error('保存エラー:', error);
     alert('保存に失敗しました。');
+  }
+}
+
+// 時刻フォーマットをデフォルトにリセット
+async function resetTimeFormat() {
+  if (!confirm('時刻フォーマットをデフォルトに戻しますか？')) return;
+  
+  try {
+    document.getElementById('time-format-input').value = DEFAULT_TIME_FORMATS;
+    await chrome.storage.sync.set({ timeFormats: DEFAULT_TIME_FORMATS });
+    alert('時刻フォーマットをデフォルトに戻しました。');
+    document.getElementById('save-time-btn').disabled = true;
+  } catch (error) {
+    console.error('リセットエラー:', error);
+    alert('リセットに失敗しました。');
   }
 }
 
