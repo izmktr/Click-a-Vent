@@ -474,7 +474,7 @@ function createHistoryItem(item, index) {
       </div>
       <div class="history-url">${item.url}</div>
       <div class="history-event">${item.eventName || '(なし)'}</div>
-      <div style="display: flex; gap: 8px;">
+      <div style="display: flex; flex-direction: column; gap: 6px;">
         <button class="history-add-btn" onclick="addToAutoConfig(${index})">
           自動設定に追加
         </button>
