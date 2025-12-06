@@ -3,6 +3,7 @@ let selectionActive = false;
 let currentField = null;
 let fieldsToSelect = [];
 let selectedData = {};
+let selectedXPaths = {}; // XPathを保存
 let highlightedElement = null;
 let overlay = null;
 let infoBox = null;
@@ -23,7 +24,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   return true;
 });
-
 // 選択モードの開始
 function startSelectionMode(fields) {
   if (selectionActive) return;
@@ -31,6 +31,8 @@ function startSelectionMode(fields) {
   selectionActive = true;
   fieldsToSelect = fields;
   selectedData = {};
+  selectedXPaths = {}; // XPathをリセット
+  currentField = fields[0];
   currentField = fields[0];
   
   createOverlay();
@@ -182,11 +184,14 @@ function handleClick(e) {
       e.target.closest('#click-a-vent-info')) {
     return;
   }
-  
   // 要素のテキストを取得
   const selectedText = getElementText(e.target);
   
   // 選択したデータを保存
+  selectedData[currentField] = selectedText;
+  
+  // XPathを取得して保存
+  selectedXPaths[currentField] = getXPath(e.target);
   selectedData[currentField] = selectedText;
   
   // ハイライトをクリア
@@ -222,10 +227,6 @@ function handleRightClick(e) {
 // キーボードイベント (ESCでキャンセル)
 document.addEventListener('keydown', (e) => {
   if (selectionActive && e.key === 'Escape') {
-    endSelectionMode();
-  }
-});
-
 // 次のフィールドへ移動
 function moveToNextField() {
   const currentIndex = fieldsToSelect.indexOf(currentField);
@@ -238,11 +239,89 @@ function moveToNextField() {
     // 全フィールドの選択完了
     endSelectionMode();
     
+    // 履歴に追加
+    saveToHistory();
+    
     // 選択したデータをstorageに保存
     chrome.storage.local.set({ selectedData: selectedData }, () => {
       // ポップアップを開く
       chrome.runtime.sendMessage({ 
         action: 'openPopup'
+      });
+    });
+  }
+}
+
+// 履歴に保存
+async function saveToHistory() {
+  try {
+    // 現在のページURLを取得
+    const currentUrl = window.location.href;
+    
+    // 履歴データを作成
+    const historyItem = {
+      timestamp: Date.now(),
+      url: currentUrl,
+      eventName: selectedData.eventName || '',
+      eventXPath: selectedXPaths.eventName || '',
+      dateTime: selectedData.dateTime || '',
+      dateTimeXPath: selectedXPaths.dateTime || '',
+      location: selectedData.location || '',
+      locationXPath: selectedXPaths.location || ''
+    };
+    
+    // 既存の履歴を取得
+    const data = await chrome.storage.local.get(['eventHistory']);
+    let history = data.eventHistory || [];
+    
+    // 新しい履歴を先頭に追加
+    history.unshift(historyItem);
+    
+    // 最大30件に制限
+    if (history.length > 30) {
+      history = history.slice(0, 30);
+    }
+    
+    // 履歴を保存
+    await chrome.storage.local.set({ eventHistory: history });
+  } catch (error) {
+    console.error('履歴の保存エラー:', error);
+  }
+}
+
+// 要素のXPathを取得
+function getXPath(element) {
+  if (element.id) {
+    return `//*[@id="${element.id}"]`;
+  }
+  
+  if (element === document.body) {
+    return '/html/body';
+  }
+  
+  let path = '';
+  let current = element;
+  
+  while (current && current.nodeType === Node.ELEMENT_NODE) {
+    let index = 0;
+    let sibling = current.previousSibling;
+    
+    while (sibling) {
+      if (sibling.nodeType === Node.ELEMENT_NODE && sibling.nodeName === current.nodeName) {
+        index++;
+      }
+      sibling = sibling.previousSibling;
+    }
+    
+    const tagName = current.nodeName.toLowerCase();
+    const pathIndex = index > 0 ? `[${index + 1}]` : '';
+    path = `/${tagName}${pathIndex}${path}`;
+    
+    current = current.parentNode;
+  }
+  
+  return path;
+}       action: 'openPopup'
       });
     });
   }
