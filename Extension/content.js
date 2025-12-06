@@ -33,7 +33,6 @@ function startSelectionMode(fields) {
   selectedData = {};
   selectedXPaths = {}; // XPathをリセット
   currentField = fields[0];
-  currentField = fields[0];
   
   createOverlay();
   createInfoBox();
@@ -185,6 +184,7 @@ function handleClick(e) {
     return;
   }
   // 要素のテキストを取得
+  // 要素のテキストを取得
   const selectedText = getElementText(e.target);
   
   // 選択したデータを保存
@@ -192,8 +192,6 @@ function handleClick(e) {
   
   // XPathを取得して保存
   selectedXPaths[currentField] = getXPath(e.target);
-  selectedData[currentField] = selectedText;
-  
   // ハイライトをクリア
   if (highlightedElement) {
     highlightedElement.style.outline = '';
@@ -227,6 +225,10 @@ function handleRightClick(e) {
 // キーボードイベント (ESCでキャンセル)
 document.addEventListener('keydown', (e) => {
   if (selectionActive && e.key === 'Escape') {
+    endSelectionMode();
+  }
+});
+
 // 次のフィールドへ移動
 function moveToNextField() {
   const currentIndex = fieldsToSelect.indexOf(currentField);
@@ -315,15 +317,11 @@ function getXPath(element) {
     
     const tagName = current.nodeName.toLowerCase();
     const pathIndex = index > 0 ? `[${index + 1}]` : '';
-    path = `/${tagName}${pathIndex}${path}`;
-    
-    current = current.parentNode;
-  }
   
   return path;
-}       action: 'openPopup'
-      });
-    });
+}
+
+// 要素からテキストを取得
   }
 }
 
