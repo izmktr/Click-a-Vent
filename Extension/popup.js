@@ -23,8 +23,9 @@ const helpBtn = document.getElementById('help-btn');
 
 const eventNameInput = document.getElementById('event-name');
 const eventDateInput = document.getElementById('event-date');
-const eventEndTimeInput = document.getElementById('event-end-time');
 const eventLocationInput = document.getElementById('event-location');
+
+let selectedDurationMinutes = 60; // デフォルトは1時間
 
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
@@ -39,7 +40,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.local.remove(['selectedData']);
   }
 });
-
 // イベントリスナーの設定
 function setupEventListeners() {
   loginBtn.addEventListener('click', handleLogin);
@@ -51,6 +51,19 @@ function setupEventListeners() {
   registerBtn.addEventListener('click', handleRegister);
   settingsBtn.addEventListener('click', handleSettings);
   helpBtn.addEventListener('click', handleHelp);
+  
+  // 終了時刻ボタンのイベントリスナー
+  const durationButtons = document.querySelectorAll('.duration-btn');
+  durationButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // すべてのボタンからactiveクラスを削除
+      durationButtons.forEach(b => b.classList.remove('active'));
+      // クリックされたボタンにactiveクラスを追加
+      e.target.classList.add('active');
+      // 選択された時間を保存
+      selectedDurationMinutes = parseInt(e.target.dataset.minutes);
+    });
+  });
 }
 
 // ログイン状態の確認
@@ -222,7 +235,6 @@ async function handleRegister() {
     // 入力値の取得
     const eventName = eventNameInput.value.trim();
     const eventDate = eventDateInput.value;
-    const eventEndTime = eventEndTimeInput.value;
     const eventLocation = eventLocationInput.value.trim();
 
     // バリデーション
@@ -239,28 +251,19 @@ async function handleRegister() {
     // テストモードの場合
     if (currentToken === 'TEST_MODE') {
       showStatusMessage('テストモード: イベント情報を確認しました（実際の登録は行われません）', 'info');
-      console.log('テストモード - イベント情報:', { eventName, eventDate, eventEndTime, eventLocation });
+      console.log('テストモード - イベント情報:', { eventName, eventDate, duration: selectedDurationMinutes, eventLocation });
       
       // フォームをクリア
       eventNameInput.value = '';
       eventDateInput.value = '';
-      eventEndTimeInput.value = '';
       eventLocationInput.value = '';
       
       return;
     }
 
-    // 終了時刻の処理
-    let endDateTime = null;
-    if (eventEndTime) {
-      const startDate = new Date(eventDate);
-      endDateTime = new Date(startDate);
-      const [hours, minutes] = eventEndTime.split(':');
-      endDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    } else {
-      // 終了時刻が指定されていない場合は開始時刻の1時間後
-      endDateTime = new Date(new Date(eventDate).getTime() + 60 * 60 * 1000);
-    }
+    // 終了時刻の処理（選択された経過時間を追加）
+    const startDate = new Date(eventDate);
+    const endDateTime = new Date(startDate.getTime() + selectedDurationMinutes * 60 * 1000);
 
     // Google Calendar APIへのリクエスト
     const event = {
@@ -293,7 +296,6 @@ async function handleRegister() {
       // フォームをクリア
       eventNameInput.value = '';
       eventDateInput.value = '';
-      eventEndTimeInput.value = '';
       eventLocationInput.value = '';
       
       setTimeout(() => {

@@ -145,6 +145,40 @@ h2 {
   margin-top: 20px;
 }
 
+/* 終了時刻ボタン */
+.duration-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.duration-btn {
+  padding: 8px 12px;
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.duration-btn:hover {
+  background-color: #f0f0f0;
+  border-color: #1a73e8;
+}
+
+.duration-btn.active {
+  background-color: #1a73e8;
+  color: white;
+  border-color: #1a73e8;
+}
+
+.duration-btn:active {
+  transform: scale(0.95);
+}
+
 /* ステータスメッセージ */
 .status-message {
   padding: 10px;
