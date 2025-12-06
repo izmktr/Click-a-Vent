@@ -1,0 +1,41 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="128" height="128" rx="24" fill="#1a73e8"/>
+  
+  <!-- カレンダーのアイコン -->
+  <rect x="24" y="32" width="80" height="72" rx="8" fill="white"/>
+  
+  <!-- カレンダーの上部バー -->
+  <rect x="24" y="32" width="80" height="16" rx="8" fill="#4285f4"/>
+  <rect x="24" y="40" width="80" height="8" fill="#4285f4"/>
+  
+  <!-- カレンダーのリング -->
+  <circle cx="40" cy="32" r="4" fill="white"/>
+  <circle cx="88" cy="32" r="4" fill="white"/>
+  
+  <!-- カレンダーの日付グリッド -->
+  <rect x="32" y="56" width="8" height="8" rx="2" fill="#1a73e8"/>
+  <rect x="44" y="56" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="56" y="56" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="68" y="56" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="80" y="56" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="92" y="56" width="8" height="8" rx="2" fill="#666"/>
+  
+  <rect x="32" y="68" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="44" y="68" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="56" y="68" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="68" y="68" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="80" y="68" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="92" y="68" width="8" height="8" rx="2" fill="#666"/>
+  
+  <rect x="32" y="80" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="44" y="80" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="56" y="80" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="68" y="80" width="8" height="8" rx="2" fill="#666"/>
+  <rect x="80" y="80" width="8" height="8" rx="2" fill="#666"/>
+  
+  <!-- クリックカーソル -->
+  <g transform="translate(75, 75)">
+    <path d="M 0 0 L 0 20 L 6 15 L 10 22 L 14 20 L 10 13 L 16 13 Z" fill="white" stroke="#333" stroke-width="1"/>
+  </g>
+</svg>

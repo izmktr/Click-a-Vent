@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Click-a-Vent</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- ログイン前の画面 -->
+  <div id="login-screen" class="screen">
+    <h2>Click-a-Vent</h2>
+    <p>Google Calendarにイベントを登録するには、Googleアカウントでログインしてください。</p>
+    <button id="login-btn" class="primary-btn">Googleにログイン</button>
+    <button id="close-login-btn" class="secondary-btn">閉じる</button>
+  </div>
+
+  <!-- ログイン後の画面 -->
+  <div id="main-screen" class="screen hidden">
+    <!-- ヘッダー -->
+    <div class="header">
+      <h2>Click-a-Vent</h2>
+      <div class="icons">
+        <button id="settings-btn" class="icon-btn" title="設定">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6m0 6v6m0-18a11 11 0 0 1 0 22 11 11 0 0 1 0-22zm5.5 3.5l-4 4m0 6l4 4m-11-11l4 4m0 6l-4 4"></path>
+            <path d="M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41M19.07 19.07l-1.41-1.41M6.34 6.34L4.93 4.93"></path>
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 6.5v.01M17.5 12h.01M12 17.5v.01M6.5 12h.01"></path>
+            <path d="M15 8l-6 8M15 16l-6-8"></path>
+            <line x1="12" y1="2" x2="12" y2="6"></line>
+            <line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+            <line x1="2" y1="12" x2="6" y2="12"></line>
+            <line x1="18" y1="12" x2="22" y2="12"></line>
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+          </svg>
+        </button>
+        <button id="help-btn" class="icon-btn" title="ヘルプ">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ページから情報を入力ボタン -->
+    <div class="action-section">
+      <button id="select-from-page-btn" class="primary-btn">ページから情報を入力</button>
+    </div>
+
+    <!-- フォーム -->
+    <div class="form-section">
+      <div class="form-group">
+        <label for="event-name">イベント名</label>
+        <input type="text" id="event-name" placeholder="イベント名を入力">
+      </div>
+
+      <div class="form-group">
+        <label for="event-date">日付＋開始時刻</label>
+        <input type="datetime-local" id="event-date">
+      </div>
+
+      <div class="form-group">
+        <label for="event-end-time">終了時刻</label>
+        <input type="time" id="event-end-time">
+      </div>
+
+      <div class="form-group">
+        <label for="event-location">場所</label>
+        <input type="text" id="event-location" placeholder="場所を入力">
+      </div>
+    </div>
+
+    <!-- ボタン -->
+    <div class="button-group">
+      <button id="register-btn" class="primary-btn">登録</button>
+      <button id="close-main-btn" class="secondary-btn">閉じる</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
