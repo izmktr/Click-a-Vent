@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // storageから選択されたデータを取得
   const result = await chrome.storage.local.get(['selectedData']);
   if (result.selectedData) {
-    loadSelectedData(result.selectedData);
+    await loadSelectedData(result.selectedData);
     // 使用後はクリア
     await chrome.storage.local.remove(['selectedData']);
   }
@@ -375,12 +375,14 @@ function showStatusMessage(message, type = 'info') {
 }
 
 // 選択されたデータをフォームに読み込む
-function loadSelectedData(data) {
+async function loadSelectedData(data) {
   if (data.eventName) {
     eventNameInput.value = data.eventName;
   }
   if (data.dateTime) {
-    eventDateInput.value = data.dateTime;
+    // 日付・時刻テキストをISO形式に変換
+    const parsedDateTime = await parseDateTimeText(data.dateTime);
+    eventDateInput.value = parsedDateTime;
   }
   if (data.location) {
     eventLocationInput.value = data.location;
@@ -398,3 +400,115 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   return true;
 });
+
+// テキストから日付を抽出
+function extractDateFromText(text, formatList) {
+  if (!text) return null;
+  
+  for (const format of formatList) {
+    // %Y, %M, %D をそれぞれ正規表現パターンに変換
+    let pattern = format
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // 特殊文字をエスケープ
+      .replace(/%Y/g, '(\\d{4})') // 年: 4桁の数字
+      .replace(/%M/g, '(\\d{1,2})') // 月: 1-2桁の数字
+      .replace(/%D/g, '(\\d{1,2})'); // 日: 1-2桁の数字
+    
+    const regex = new RegExp(pattern);
+    const match = text.match(regex);
+    
+    if (match) {
+      // フォーマットから年月日の位置を判定
+      const formatParts = format.match(/%[YMD]/g) || [];
+      const result = {};
+      
+      formatParts.forEach((part, index) => {
+        if (part === '%Y') result.year = match[index + 1];
+        if (part === '%M') result.month = match[index + 1];
+        if (part === '%D') result.day = match[index + 1];
+      });
+      
+      // 年が取得できた場合は年月日形式で返す
+      if (result.year && result.month && result.day) {
+        return {
+          year: result.year,
+          month: result.month.padStart(2, '0'),
+          day: result.day.padStart(2, '0')
+        };
+      }
+    }
+  }
+  
+  return null;
+}
+
+// テキストから時刻を抽出
+function extractTimeFromText(text, formatList) {
+  if (!text) return null;
+  
+  for (const format of formatList) {
+    // %H, %M を正規表現パターンに変換
+    let pattern = format
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // 特殊文字をエスケープ
+      .replace(/%H/g, '(\\d{1,2})') // 時: 1-2桁の数字
+      .replace(/%M/g, '(\\d{1,2})'); // 分: 1-2桁の数字
+    
+    const regex = new RegExp(pattern);
+    const match = text.match(regex);
+    
+    if (match) {
+      // フォーマットから時分の位置を判定
+      const formatParts = format.match(/%[HM]/g) || [];
+      const result = {};
+      
+      formatParts.forEach((part, index) => {
+        if (part === '%H') result.hour = match[index + 1];
+        if (part === '%M') result.minute = match[index + 1];
+      });
+      
+      // 時刻を返す
+      if (result.hour !== undefined) {
+        return {
+          hour: result.hour.padStart(2, '0'),
+          minute: (result.minute || '00').padStart(2, '0')
+        };
+      }
+    }
+  }
+  
+  return null;
+}
+
+// 日付・時刻テキストをISO形式に変換
+async function parseDateTimeText(dateTimeText) {
+  try {
+    // 設定から日付・時刻フォーマットを取得
+    const settings = await chrome.storage.sync.get(['dateFormats', 'timeFormats']);
+    const dateFormats = (settings.dateFormats || '%Y年%M月%D日\n%M月%D日\n%M/%D').split('\n').filter(f => f.trim());
+    const timeFormats = (settings.timeFormats || '%H:%M\n%H：%M\n%H時%M分\n%H時').split('\n').filter(f => f.trim());
+    
+    // 日付を抽出
+    const dateInfo = extractDateFromText(dateTimeText, dateFormats);
+    
+    // 時刻を抽出
+    const timeInfo = extractTimeFromText(dateTimeText, timeFormats);
+    
+    if (!dateInfo && !timeInfo) {
+      // 抽出失敗 - 元のテキストをそのまま返す
+      return dateTimeText;
+    }
+    
+    // ISO形式の日時文字列を構築
+    const now = new Date();
+    const year = dateInfo?.year || now.getFullYear();
+    const month = dateInfo?.month || String(now.getMonth() + 1).padStart(2, '0');
+    const day = dateInfo?.day || String(now.getDate()).padStart(2, '0');
+    const hour = timeInfo?.hour || '00';
+    const minute = timeInfo?.minute || '00';
+    
+    // datetime-local形式 (YYYY-MM-DDTHH:mm)
+    return `${year}-${month}-${day}T${hour}:${minute}`;
+  } catch (error) {
+    console.error('日付・時刻の解析エラー:', error);
+    return dateTimeText;
+  }
+}
