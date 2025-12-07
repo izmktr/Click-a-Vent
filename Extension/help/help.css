@@ -233,6 +233,12 @@ td:first-child {
   white-space: nowrap;
 }
 
+.header-icons-table th:first-child,
+.header-icons-table td:first-child {
+  width: 60px;
+  text-align: center;
+}
+
 th {
   background: #667eea;
   color: white;
