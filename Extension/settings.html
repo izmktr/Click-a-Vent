@@ -122,6 +122,12 @@
           <button id="reset-date-btn" class="secondary-btn">デフォルトに戻す</button>
         </div>
         
+        <div id="date-test-section" class="test-input-section" style="display: none;">
+          <label for="date-test-input">テスト用テキスト</label>
+          <input type="text" id="date-test-input" placeholder="例: 2025年12月25日 14:30">
+          <div id="date-test-parse-result" class="parse-result"></div>
+        </div>
+        
         <div id="date-test-result" class="test-result"></div>
       </div>
     </div>
@@ -150,6 +156,12 @@
           <button id="reset-time-btn" class="secondary-btn">デフォルトに戻す</button>
         </div>
         
+        <div id="time-test-section" class="test-input-section" style="display: none;">
+          <label for="time-test-input">テスト用テキスト</label>
+          <input type="text" id="time-test-input" placeholder="例: 2025年12月25日 14:30">
+          <div id="time-test-parse-result" class="parse-result"></div>
+        </div>
+        
         <div id="time-test-result" class="test-result"></div>
       </div>
     </div>
@@ -176,6 +188,7 @@
     </div>
   </div>
 
+  <script src="utils.js"></script>
   <script src="settings.js"></script>
 </body>
 </html>
