@@ -146,7 +146,7 @@ async function loadSettings() {
   try {
     const data = await chrome.storage.sync.get(['autoConfigs', 'dateFormats', 'timeFormats', 'addAsRegex', 'durationButtons', 'customInputPosition']);
     
-    // 自動設定
+    // 自動抽出
     autoConfigs = data.autoConfigs || [];
     renderUrlList();
     
@@ -402,7 +402,7 @@ function validateXPath(xpath) {
   }
 }
 
-// 自動設定の保存
+// 自動抽出の保存
 async function saveAutoConfigs() {
   try {
     await chrome.storage.sync.set({ autoConfigs });
@@ -564,7 +564,7 @@ function createHistoryItem(item, index) {
       <div class="history-event">${item.eventName || '(なし)'}</div>
       <div style="display: flex; flex-direction: column; gap: 6px;">
         <button class="history-add-btn" data-index="${index}">
-          自動設定に追加
+          自動抽出に追加
         </button>
         <button class="history-delete-btn" data-index="${index}" title="この履歴を削除">
           削除
@@ -616,7 +616,7 @@ function createHistoryItem(item, index) {
   return div;
 }
 
-// 履歴から自動設定に追加
+// 履歴から自動抽出に追加
 async function addToAutoConfig(index) {
   const data = await chrome.storage.local.get(['eventHistory']);
   const history = data.eventHistory || [];
@@ -624,7 +624,7 @@ async function addToAutoConfig(index) {
   
   if (!item) return;
   
-  // 自動設定タブに切り替え（確実に実行）
+  // 自動抽出タブに切り替え（確実に実行）
   const autoConfigTab = document.querySelector('[data-tab="auto-config"]');
   const allTabButtons = document.querySelectorAll('.tab-btn');
   const allTabContents = document.querySelectorAll('.tab-content');
@@ -633,7 +633,7 @@ async function addToAutoConfig(index) {
   allTabButtons.forEach(b => b.classList.remove('active'));
   allTabContents.forEach(c => c.classList.remove('active'));
   
-  // 自動設定タブを active に
+  // 自動抽出タブを active に
   autoConfigTab.classList.add('active');
   document.getElementById('auto-config').classList.add('active');
   

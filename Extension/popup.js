@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadDurationButtons();
   setupEventListeners();
   
-  // 自動設定のチェックと適用
+  // 自動抽出のチェックと適用
   await checkAndApplyAutoConfig();
   
   // storageから選択されたデータを取得
@@ -568,7 +568,7 @@ async function checkAndApplyAutoConfig() {
   }
 }
 
-// 自動設定を適用してページから情報を取得
+// 自動抽出を適用してページから情報を取得
 async function applyAutoConfig(tab, config) {
   try {
     // コンテンツスクリプトが既に注入されているか確認
@@ -599,18 +599,18 @@ async function applyAutoConfig(tab, config) {
     });
     
     if (result && result.success) {
-      // 取得したデータをフォームに設定（自動設定の場合はメッセージを表示しない）
+      // 取得したデータをフォームに設定（自動抽出の場合はメッセージを表示しない）
       await loadSelectedData(result.data, false);
       
-      // 自動設定インジケーターを表示
+      // 自動抽出インジケーターを表示
       showAutoConfigIndicator(config, result.data);
     }
   } catch (error) {
-    console.error('自動設定の適用エラー:', error);
+    console.error('自動抽出の適用エラー:', error);
   }
 }
 
-// 自動設定インジケーターを表示
+// 自動抽出インジケーターを表示
 function showAutoConfigIndicator(config, data) {
   const indicator = document.getElementById('auto-config-indicator');
   const tooltip = document.getElementById('auto-config-tooltip');
