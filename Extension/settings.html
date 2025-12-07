@@ -49,8 +49,8 @@
             
             <div class="form-group">
               <label for="config-url">URL <span class="required">*</span></label>
-              <input type="text" id="config-url" placeholder="https://example.com/events/" required>
-              <small>前方一致でマッチします</small>
+              <input type="text" id="config-url" placeholder="https://example\.com/events/.*" required>
+              <small>正規表現でマッチします（前方一致の場合は ^https://example\.com/events/）</small>
             </div>
             
             <div class="form-group">

@@ -566,8 +566,16 @@ async function checkAndApplyAutoConfig() {
     
     if (autoConfigs.length === 0) return;
     
-    // URLが前方一致する設定を検索
-    const matchedConfig = autoConfigs.find(config => currentUrl.startsWith(config.url));
+    // URLが正規表現にマッチする設定を検索
+    const matchedConfig = autoConfigs.find(config => {
+      try {
+        const regex = new RegExp(config.url);
+        return regex.test(currentUrl);
+      } catch (e) {
+        console.error('正規表現エラー:', config.url, e);
+        return false;
+      }
+    });
     
     if (!matchedConfig) return;
     

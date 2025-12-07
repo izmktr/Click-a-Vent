@@ -247,13 +247,6 @@ async function handleSubmitConfig(e) {
     return;
   }
   
-  // URL競合チェック
-  if (isUrlConflict(url, selectedConfigIndex)) {
-    document.getElementById('config-url').classList.add('error');
-    alert('このURLは既に登録されているURLと競合します。');
-    return;
-  }
-  
   const config = {
     title,
     url,
@@ -272,19 +265,11 @@ async function handleSubmitConfig(e) {
   handleNewConfig();
 }
 
-// URL競合チェック
-function isUrlConflict(url, currentIndex) {
-  return autoConfigs.some((config, index) => {
-    if (index === currentIndex) return false;
-    // 前方一致チェック
-    return url.startsWith(config.url) || config.url.startsWith(url);
-  });
-}
-
-// URLバリデーション
+// URLバリデーション（正規表現として妥当かチェック）
 function validateUrl(url) {
+  if (!url) return false;
   try {
-    new URL(url);
+    new RegExp(url);
     return true;
   } catch {
     return false;
