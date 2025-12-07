@@ -45,7 +45,7 @@ function setupEventListeners() {
   document.getElementById('auto-config-form').addEventListener('submit', handleSubmitConfig);
   
   // フォーム入力監視
-  const formInputs = ['config-url', 'config-event-xpath', 'config-datetime-xpath', 'config-location-xpath'];
+  const formInputs = ['config-title', 'config-url', 'config-event-xpath', 'config-datetime-xpath', 'config-location-xpath'];
   formInputs.forEach(id => {
     document.getElementById(id).addEventListener('input', handleFormInput);
   });
@@ -103,7 +103,7 @@ function renderUrlList() {
       item.classList.add('selected');
     }
     
-    item.innerHTML = `<div class="url-item-text">${config.url}</div>`;
+    item.innerHTML = `<div class="url-item-text">${config.title || config.url}</div>`;
     item.addEventListener('click', () => selectConfig(index));
     urlList.appendChild(item);
   });
@@ -117,6 +117,7 @@ function selectConfig(index) {
   isNewMode = false;
   
   const config = autoConfigs[index];
+  document.getElementById('config-title').value = config.title || '';
   document.getElementById('config-url').value = config.url;
   document.getElementById('config-event-xpath').value = config.eventXPath;
   document.getElementById('config-datetime-xpath').value = config.dateTimeXPath || '';
@@ -138,6 +139,7 @@ function handleNewConfig() {
   isNewMode = true;
   
   // フォームをクリア
+  document.getElementById('config-title').value = '';
   document.getElementById('config-url').value = '';
   document.getElementById('config-event-xpath').value = '';
   document.getElementById('config-datetime-xpath').value = '';
@@ -193,11 +195,12 @@ function updateControlButtons() {
 
 // フォーム入力の監視
 function handleFormInput(e) {
+  const title = document.getElementById('config-title').value.trim();
   const url = document.getElementById('config-url').value.trim();
   const eventXPath = document.getElementById('config-event-xpath').value.trim();
   
   // 必須項目チェック
-  const isValid = url && eventXPath;
+  const isValid = title && url && eventXPath;
   document.getElementById('submit-config-btn').disabled = !isValid;
   
   // 編集中フラグ
@@ -217,6 +220,7 @@ function clearEditedFlags() {
 async function handleSubmitConfig(e) {
   e.preventDefault();
   
+  const title = document.getElementById('config-title').value.trim();
   const url = document.getElementById('config-url').value.trim();
   const eventXPath = document.getElementById('config-event-xpath').value.trim();
   const dateTimeXPath = document.getElementById('config-datetime-xpath').value.trim();
@@ -225,6 +229,12 @@ async function handleSubmitConfig(e) {
   clearEditedFlags();
   
   // バリデーション
+  if (!title) {
+    document.getElementById('config-title').classList.add('error');
+    alert('タイトルを入力してください。');
+    return;
+  }
+  
   if (!validateUrl(url)) {
     document.getElementById('config-url').classList.add('error');
     alert('URLの形式が不正です。');
@@ -245,6 +255,7 @@ async function handleSubmitConfig(e) {
   }
   
   const config = {
+    title,
     url,
     eventXPath,
     dateTimeXPath,
@@ -584,7 +595,17 @@ async function addToAutoConfig(index) {
   // 新規モードに設定
   handleNewConfig();
   
+  // URLからドメイン部分を抽出してタイトルに設定
+  let title = '';
+  try {
+    const url = new URL(item.url);
+    title = url.hostname;
+  } catch (e) {
+    title = item.url || '';
+  }
+  
   // フォームに値を設定
+  document.getElementById('config-title').value = title;
   document.getElementById('config-url').value = item.url || '';
   document.getElementById('config-event-xpath').value = item.eventXPath || '';
   document.getElementById('config-datetime-xpath').value = item.dateTimeXPath || '';
