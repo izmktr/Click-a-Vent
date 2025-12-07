@@ -298,11 +298,6 @@ header h1 {
   margin-bottom: 20px;
 }
 
-.button-group-horizontal .primary-btn,
-.button-group-horizontal .secondary-btn {
-  flex: 1;
-}
-
 .button-group {
   display: flex;
   gap: 10px;
