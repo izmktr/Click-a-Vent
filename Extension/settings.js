@@ -3,9 +3,23 @@ let autoConfigs = [];
 let selectedConfigIndex = -1;
 let isNewMode = true;
 
+// イベント期間設定
+let durationButtons = [];
+let selectedDurationIndex = -1;
+let isDurationNewMode = true;
+
 // デフォルト設定
 const DEFAULT_DATE_FORMATS = '%Y年%M月%D日\n%M月%D日\n%Y/%M/%D\n%M/%D\n%Y-%M-%D\n%M-%D\n%Y.%M.%D\n%M.%D';
 const DEFAULT_TIME_FORMATS = '%H:%M\n%H：%M\n%P%H時%M分\n%P%H時\n%H時%M分\n%H時\n%H.%M\n%H-%M';
+const DEFAULT_DURATION_BUTTONS = [
+  { name: '0分', duration: '0m', isDefault: false, minutes: 0 },
+  { name: '10分', duration: '10m', isDefault: false, minutes: 10 },
+  { name: '30分', duration: '30m', isDefault: false, minutes: 30 },
+  { name: '1時間', duration: '1h', isDefault: true, minutes: 60 },
+  { name: '2時間', duration: '2h', isDefault: false, minutes: 120 },
+  { name: '4時間', duration: '4h', isDefault: false, minutes: 240 },
+  { name: '8時間', duration: '8h', isDefault: false, minutes: 480 }
+];
 
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
@@ -74,6 +88,24 @@ function setupEventListeners() {
   document.getElementById('save-time-btn').addEventListener('click', saveTimeFormat);
   document.getElementById('time-test-input').addEventListener('input', handleTimeTestInput);
   
+  // イベント期間設定
+  document.getElementById('duration-new-btn').addEventListener('click', handleNewDuration);
+  document.getElementById('duration-delete-btn').addEventListener('click', handleDeleteDuration);
+  document.getElementById('duration-move-up-btn').addEventListener('click', () => moveDuration(-1));
+  document.getElementById('duration-move-down-btn').addEventListener('click', () => moveDuration(1));
+  document.getElementById('duration-config-form').addEventListener('submit', handleSubmitDuration);
+  document.getElementById('duration-value').addEventListener('input', handleDurationValueInput);
+  document.getElementById('custom-input-position').addEventListener('change', saveCustomInputPosition);
+  
+  // 期間フォーム入力監視
+  const durationFormInputs = ['duration-button-name', 'duration-value'];
+  durationFormInputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', handleDurationFormInput);
+  });
+  
+  // デフォルトチェックボックスの変更も監視
+  document.getElementById('duration-is-default').addEventListener('change', handleDurationFormInput);
+  
   // 履歴設定
   document.getElementById('add-as-regex').addEventListener('change', saveAddAsRegexSetting);
 }
@@ -81,7 +113,7 @@ function setupEventListeners() {
 // 設定の読み込み
 async function loadSettings() {
   try {
-    const data = await chrome.storage.sync.get(['autoConfigs', 'dateFormats', 'timeFormats', 'addAsRegex']);
+    const data = await chrome.storage.sync.get(['autoConfigs', 'dateFormats', 'timeFormats', 'addAsRegex', 'durationButtons', 'customInputPosition']);
     
     // 自動設定
     autoConfigs = data.autoConfigs || [];
@@ -92,6 +124,13 @@ async function loadSettings() {
     
     // 時刻設定
     document.getElementById('time-format-input').value = data.timeFormats || DEFAULT_TIME_FORMATS;
+    
+    // イベント期間設定
+    durationButtons = data.durationButtons || DEFAULT_DURATION_BUTTONS;
+    renderDurationList();
+    
+    // 自由入力欄の配置
+    document.getElementById('custom-input-position').value = data.customInputPosition || 'end';
     
     // 履歴からの追加設定
     document.getElementById('add-as-regex').checked = data.addAsRegex || false;
@@ -957,4 +996,307 @@ function handleTimeTestInput() {
   }
   
   resultDiv.innerHTML = html;
+}
+
+// ====================
+// イベント期間設定の関数群
+// ====================
+
+// 期間リストの描画
+function renderDurationList() {
+  const durationList = document.getElementById('duration-list');
+  durationList.innerHTML = '';
+  
+  if (durationButtons.length === 0) {
+    durationList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">登録なし</div>';
+    return;
+  }
+  
+  durationButtons.forEach((button, index) => {
+    const item = document.createElement('div');
+    item.className = 'url-item';
+    if (index === selectedDurationIndex) {
+      item.classList.add('selected');
+    }
+    
+    const displayText = button.isDefault ? `${button.name} [デフォルト]` : button.name;
+    item.innerHTML = `<div class="url-item-text">${displayText}</div>`;
+    item.addEventListener('click', () => selectDuration(index));
+    durationList.appendChild(item);
+  });
+  
+  updateDurationControlButtons();
+}
+
+// 期間の選択
+function selectDuration(index) {
+  selectedDurationIndex = index;
+  isDurationNewMode = false;
+  
+  const button = durationButtons[index];
+  document.getElementById('duration-button-name').value = button.name || '';
+  document.getElementById('duration-value').value = button.duration || '';
+  document.getElementById('duration-is-default').checked = button.isDefault || false;
+  
+  // 期間の解析結果を表示
+  handleDurationValueInput();
+  
+  // 編集フラグをリセット
+  clearDurationEditedFlags();
+  
+  // ボタンの更新
+  document.getElementById('submit-duration-btn').textContent = '更新';
+  document.getElementById('submit-duration-btn').disabled = true;
+  
+  renderDurationList();
+}
+
+// 新規作成
+function handleNewDuration() {
+  selectedDurationIndex = -1;
+  isDurationNewMode = true;
+  
+  // フォームをクリア
+  document.getElementById('duration-button-name').value = '';
+  document.getElementById('duration-value').value = '';
+  document.getElementById('duration-is-default').checked = false;
+  document.getElementById('duration-parse-result').innerHTML = '';
+  
+  clearDurationEditedFlags();
+  
+  document.getElementById('submit-duration-btn').textContent = '追加';
+  document.getElementById('submit-duration-btn').disabled = true;
+  
+  renderDurationList();
+}
+
+// 削除
+async function handleDeleteDuration() {
+  if (selectedDurationIndex === -1) return;
+  
+  if (!confirm('この期間ボタンを削除しますか？')) return;
+  
+  durationButtons.splice(selectedDurationIndex, 1);
+  await saveDurationButtons();
+  
+  handleNewDuration();
+}
+
+// 移動
+async function moveDuration(direction) {
+  if (selectedDurationIndex === -1) return;
+  
+  const newIndex = selectedDurationIndex + direction;
+  if (newIndex < 0 || newIndex >= durationButtons.length) return;
+  
+  // 入れ替え
+  [durationButtons[selectedDurationIndex], durationButtons[newIndex]] = 
+  [durationButtons[newIndex], durationButtons[selectedDurationIndex]];
+  
+  selectedDurationIndex = newIndex;
+  
+  await saveDurationButtons();
+  renderDurationList();
+}
+
+// コントロールボタンの更新
+function updateDurationControlButtons() {
+  const hasSelection = selectedDurationIndex !== -1;
+  const canMoveUp = hasSelection && selectedDurationIndex > 0;
+  const canMoveDown = hasSelection && selectedDurationIndex < durationButtons.length - 1;
+  
+  document.getElementById('duration-move-up-btn').disabled = !canMoveUp;
+  document.getElementById('duration-move-down-btn').disabled = !canMoveDown;
+  document.getElementById('duration-delete-btn').disabled = !hasSelection;
+}
+
+// フォーム入力の監視
+function handleDurationFormInput(e) {
+  const buttonName = document.getElementById('duration-button-name').value.trim();
+  const durationValue = document.getElementById('duration-value').value.trim();
+  
+  // 期間の解析
+  const minutes = parseDurationString(durationValue);
+  
+  // 必須項目チェック（期間が正しく解析できることも確認）
+  const isValid = buttonName && durationValue && minutes !== null;
+  document.getElementById('submit-duration-btn').disabled = !isValid;
+  
+  // 編集中フラグ
+  if (!isDurationNewMode) {
+    if (e.target.type === 'checkbox') {
+      // チェックボックスは変更されたら編集フラグ
+      e.target.classList.add('edited');
+    } else if (e.target.value !== '') {
+      // テキスト入力は値があれば編集フラグ
+      e.target.classList.add('edited');
+    }
+  }
+}
+
+// 期間値入力時の処理
+function handleDurationValueInput() {
+  const durationValue = document.getElementById('duration-value').value.trim();
+  const resultDiv = document.getElementById('duration-parse-result');
+  
+  if (!durationValue) {
+    resultDiv.innerHTML = '';
+    return;
+  }
+  
+  const minutes = parseDurationString(durationValue);
+  
+  if (minutes === null) {
+    resultDiv.innerHTML = '<div class="parse-result-row"><span class="parse-result-value error">解析エラー: 正しい形式で入力してください (例: 30m, 2h, 1d)</span></div>';
+    resultDiv.style.display = 'block';
+  } else {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const days = Math.floor(minutes / (60 * 24));
+    
+    let displayText = '';
+    if (days > 0) {
+      const remainingHours = hours % 24;
+      displayText = `${days}日`;
+      if (remainingHours > 0 || mins > 0) {
+        displayText += ` ${remainingHours}時間${mins}分`;
+      }
+    } else if (hours > 0) {
+      displayText = `${hours}時間`;
+      if (mins > 0) {
+        displayText += `${mins}分`;
+      }
+    } else {
+      displayText = `${mins}分`;
+    }
+    
+    resultDiv.innerHTML = `<div class="parse-result-row"><span class="parse-result-label">解析結果:</span><span class="parse-result-value">${minutes}分 (${displayText})</span></div>`;
+    resultDiv.style.display = 'block';
+  }
+}
+
+// 編集フラグのクリア
+function clearDurationEditedFlags() {
+  document.querySelectorAll('#duration-config-form input').forEach(input => {
+    input.classList.remove('edited', 'error');
+  });
+}
+
+// 設定の送信
+async function handleSubmitDuration(e) {
+  e.preventDefault();
+  
+  const buttonName = document.getElementById('duration-button-name').value.trim();
+  const durationValue = document.getElementById('duration-value').value.trim();
+  const isDefault = document.getElementById('duration-is-default').checked;
+  
+  clearDurationEditedFlags();
+  
+  // バリデーション
+  if (!buttonName) {
+    document.getElementById('duration-button-name').classList.add('error');
+    alert('ボタン名を入力してください。');
+    return;
+  }
+  
+  const minutes = parseDurationString(durationValue);
+  if (minutes === null) {
+    document.getElementById('duration-value').classList.add('error');
+    alert('期間の形式が不正です。正しい形式で入力してください (例: 30m, 2h, 1d)。');
+    return;
+  }
+  
+  const button = {
+    name: buttonName,
+    duration: durationValue,
+    isDefault: isDefault,
+    minutes: minutes
+  };
+  
+  // デフォルトの処理：0分のボタンがある場合は例外的にそれをデフォルトにする
+  if (isDefault) {
+    // 他のボタンのデフォルトを解除
+    durationButtons.forEach(btn => btn.isDefault = false);
+  }
+  
+  if (isDurationNewMode) {
+    durationButtons.push(button);
+  } else {
+    durationButtons[selectedDurationIndex] = button;
+  }
+  
+  // 0分のボタンがある場合、それを強制的にデフォルトにする
+  const zeroMinuteButton = durationButtons.find(btn => btn.minutes === 0);
+  if (zeroMinuteButton) {
+    durationButtons.forEach(btn => btn.isDefault = false);
+    zeroMinuteButton.isDefault = true;
+  }
+  
+  await saveDurationButtons();
+  handleNewDuration();
+}
+
+// 期間ボタンの保存
+async function saveDurationButtons() {
+  try {
+    await chrome.storage.sync.set({ durationButtons });
+    renderDurationList();
+  } catch (error) {
+    console.error('保存エラー:', error);
+    alert('保存に失敗しました。');
+  }
+}
+
+// 自由入力欄の配置設定を保存
+async function saveCustomInputPosition() {
+  try {
+    const position = document.getElementById('custom-input-position').value;
+    await chrome.storage.sync.set({ customInputPosition: position });
+  } catch (error) {
+    console.error('設定の保存エラー:', error);
+  }
+}
+
+// 時間文字列をパース（utils.jsに移動すべきだが、ここでは重複定義）
+function parseDurationString(str) {
+  if (!str || !str.trim()) return null;
+  
+  const trimmed = str.trim();
+  
+  // 数値が0の場合は例外的にサフィックスなしでも0を返す
+  if (trimmed === '0') {
+    return 0;
+  }
+  
+  let totalMinutes = 0;
+  const regex = /(\d+\.?\d*)\s*([smhd])/gi;
+  let match;
+  let hasMatch = false;
+  
+  while ((match = regex.exec(str)) !== null) {
+    hasMatch = true;
+    const value = parseFloat(match[1]);
+    const unit = match[2].toLowerCase();
+    
+    switch (unit) {
+      case 's':
+        totalMinutes += value / 60;
+        break;
+      case 'm':
+        totalMinutes += value;
+        break;
+      case 'h':
+        totalMinutes += value * 60;
+        break;
+      case 'd':
+        totalMinutes += value * 60 * 24;
+        break;
+    }
+  }
+  
+  // マッチがなかった場合はnullを返す
+  if (!hasMatch) return null;
+  
+  // 0以上の値を返す（0mなども許容）
+  return totalMinutes >= 0 ? Math.round(totalMinutes) : null;
 }

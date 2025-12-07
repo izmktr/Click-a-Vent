@@ -58,15 +58,8 @@
       <div class="form-group">
         <label for="event-end-date">終了日時</label>
         <input type="datetime-local" id="event-end-date">
-        <div class="duration-buttons">
-          <button type="button" class="duration-btn" data-minutes="0">0分</button>
-          <button type="button" class="duration-btn" data-minutes="10">10分</button>
-          <button type="button" class="duration-btn" data-minutes="30">30分</button>
-          <button type="button" class="duration-btn active" data-minutes="60">1時間</button>
-          <button type="button" class="duration-btn" data-minutes="120">2時間</button>
-          <button type="button" class="duration-btn" data-minutes="240">4時間</button>
-          <button type="button" class="duration-btn" data-minutes="480">8時間</button>
-          <input type="text" id="custom-duration" class="duration-input" placeholder="30m, 2h, 2h30m">
+        <div class="duration-buttons" id="duration-buttons-container">
+          <!-- 設定から動的に生成 -->
         </div>
       </div>
 

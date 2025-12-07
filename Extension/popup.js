@@ -27,6 +27,9 @@ let selectedDurationMinutes = 60; // デフォルトは1時間
 // 初期化
 document.addEventListener('DOMContentLoaded', async () => {
   showMainScreen();
+  
+  // 期間ボタンを読み込んでからイベントリスナーを設定
+  await loadDurationButtons();
   setupEventListeners();
   
   // 自動設定のチェックと適用
@@ -82,6 +85,91 @@ function setupEventListeners() {
   
   // 終了日時直接入力時のイベントリスナー
   eventEndDateInput.addEventListener('change', handleEndDateChange);
+}
+
+// 期間ボタンの読み込みと生成
+async function loadDurationButtons() {
+  try {
+    const data = await chrome.storage.sync.get(['durationButtons', 'customInputPosition']);
+    const durationButtons = data.durationButtons || [
+      { name: '0分', duration: '0m', isDefault: false, minutes: 0 },
+      { name: '10分', duration: '10m', isDefault: false, minutes: 10 },
+      { name: '30分', duration: '30m', isDefault: false, minutes: 30 },
+      { name: '1時間', duration: '1h', isDefault: true, minutes: 60 },
+      { name: '2時間', duration: '2h', isDefault: false, minutes: 120 },
+      { name: '4時間', duration: '4h', isDefault: false, minutes: 240 },
+      { name: '8時間', duration: '8h', isDefault: false, minutes: 480 }
+    ];
+    const customInputPosition = data.customInputPosition || 'end';
+    
+    const container = document.getElementById('duration-buttons-container');
+    container.innerHTML = '';
+    
+    // デフォルトのボタンを探す
+    let defaultButton = durationButtons.find(btn => btn.isDefault);
+    
+    // デフォルトがない場合は0分のボタンを探す
+    if (!defaultButton) {
+      defaultButton = durationButtons.find(btn => btn.minutes === 0);
+    }
+    
+    // それでもない場合は最初のボタン
+    if (!defaultButton && durationButtons.length > 0) {
+      defaultButton = durationButtons[0];
+    }
+    
+    // 自由入力欄を作成
+    const customInput = document.createElement('input');
+    customInput.type = 'text';
+    customInput.id = 'custom-duration';
+    customInput.className = 'duration-input';
+    customInput.placeholder = '30m, 2h, 2h30m';
+    
+    // 先頭に自由入力欄を配置
+    if (customInputPosition === 'start') {
+      container.appendChild(customInput);
+    }
+    
+    // ボタンを生成
+    durationButtons.forEach(button => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'duration-btn';
+      btn.dataset.minutes = button.minutes;
+      btn.textContent = button.name;
+      
+      // デフォルトのボタンにactiveクラスを追加
+      if (button === defaultButton) {
+        btn.classList.add('active');
+        selectedDurationMinutes = button.minutes;
+      }
+      
+      container.appendChild(btn);
+    });
+    
+    // 末尾に自由入力欄を配置
+    if (customInputPosition === 'end') {
+      container.appendChild(customInput);
+    }
+    
+    // 非表示の場合は何もしない（customInputは追加されない）
+    
+  } catch (error) {
+    console.error('期間ボタンの読み込みエラー:', error);
+    // エラー時はデフォルトのボタンを表示
+    const container = document.getElementById('duration-buttons-container');
+    container.innerHTML = `
+      <button type="button" class="duration-btn" data-minutes="0">0分</button>
+      <button type="button" class="duration-btn" data-minutes="10">10分</button>
+      <button type="button" class="duration-btn" data-minutes="30">30分</button>
+      <button type="button" class="duration-btn active" data-minutes="60">1時間</button>
+      <button type="button" class="duration-btn" data-minutes="120">2時間</button>
+      <button type="button" class="duration-btn" data-minutes="240">4時間</button>
+      <button type="button" class="duration-btn" data-minutes="480">8時間</button>
+      <input type="text" id="custom-duration" class="duration-input" placeholder="30m, 2h, 2h30m">
+    `;
+    selectedDurationMinutes = 60;
+  }
 }
 
 // 画面表示の切り替え
@@ -269,12 +357,21 @@ function showStatusMessage(message, type = 'info') {
 function parseDurationString(str) {
   if (!str || !str.trim()) return null;
   
+  const trimmed = str.trim();
+  
+  // 数値が0の場合は例外的にサフィックスなしでも0を返す
+  if (trimmed === '0') {
+    return 0;
+  }
+  
   let totalMinutes = 0;
   // 数値+単位のパターンにマッチ (整数または小数)
   const regex = /(\d+\.?\d*)\s*([smhd])/gi;
   let match;
+  let hasMatch = false;
   
   while ((match = regex.exec(str)) !== null) {
+    hasMatch = true;
     const value = parseFloat(match[1]);
     const unit = match[2].toLowerCase();
     
@@ -294,7 +391,11 @@ function parseDurationString(str) {
     }
   }
   
-  return totalMinutes > 0 ? Math.round(totalMinutes) : null;
+  // マッチがなかった場合はnullを返す
+  if (!hasMatch) return null;
+  
+  // 0以上の値を返す（0mなども許容）
+  return totalMinutes >= 0 ? Math.round(totalMinutes) : null;
 }
 
 // 終了日時を更新

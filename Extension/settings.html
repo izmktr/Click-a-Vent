@@ -15,6 +15,7 @@
     <!-- タブナビゲーション -->
     <nav class="tabs">
       <button class="tab-btn active" data-tab="auto-config">自動設定</button>
+      <button class="tab-btn" data-tab="duration-config">イベント期間</button>
       <button class="tab-btn" data-tab="date-format">日付設定</button>
       <button class="tab-btn" data-tab="time-format">時刻設定</button>
       <button class="tab-btn" data-tab="history">履歴</button>
@@ -163,6 +164,70 @@
         </div>
         
         <div id="time-test-result" class="test-result"></div>
+      </div>
+    </div>
+
+    <!-- イベント期間タブ -->
+    <div class="tab-content" id="duration-config">
+      <div class="split-layout">
+        <!-- 左側：期間ボタンリスト -->
+        <div class="left-panel">
+          <h2>登録済み期間ボタン</h2>
+          <div class="url-list" id="duration-list">
+            <!-- 動的に生成 -->
+          </div>
+          <div class="control-buttons">
+            <button id="duration-move-up-btn" class="control-btn" disabled>↑</button>
+            <button id="duration-move-down-btn" class="control-btn" disabled>↓</button>
+            <button id="duration-new-btn" class="control-btn">新規</button>
+            <button id="duration-delete-btn" class="control-btn" disabled>削除</button>
+          </div>
+        </div>
+
+        <!-- 右側：詳細情報 -->
+        <div class="right-panel">
+          <h2>詳細設定</h2>
+          <form id="duration-config-form">
+            <div class="form-group">
+              <label for="duration-button-name">ボタン名 <span class="required">*</span></label>
+              <input type="text" id="duration-button-name" placeholder="1時間" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="duration-value">期間 <span class="required">*</span></label>
+              <input type="text" id="duration-value" placeholder="1h, 30m, 2h30m, 1d" required>
+              <small>m=分, h=時間, d=日 (例: 30m, 2h, 2h30m, 1d)</small>
+              <div id="duration-parse-result" class="parse-result" style="margin-top: 8px;"></div>
+            </div>
+            
+            <div class="form-group">
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="duration-is-default">
+                  デフォルトに設定
+                </label>
+              </div>
+              <small>デフォルトは1つのみ設定可能です</small>
+            </div>
+            
+            <div class="button-group-horizontal">
+              <button type="submit" id="submit-duration-btn" class="primary-btn" disabled>追加</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- 自由入力欄の配置設定 -->
+      <div style="max-width: 600px; margin-top: 30px;">
+        <div class="form-group">
+          <label for="custom-input-position">自由入力欄の配置</label>
+          <select id="custom-input-position" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+            <option value="start">先頭</option>
+            <option value="end" selected>末尾</option>
+            <option value="hidden">非表示</option>
+          </select>
+          <small>ポップアップ画面での自由入力欄の表示位置を設定します</small>
+        </div>
       </div>
     </div>
 
