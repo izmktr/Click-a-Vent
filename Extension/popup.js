@@ -422,7 +422,8 @@ function extractDateFromText(text, formatList) {
         return {
           year: result.year,
           month: result.month.padStart(2, '0'),
-          day: result.day.padStart(2, '0')
+          day: result.day.padStart(2, '0'),
+          matchedText: match[0] // マッチしたテキストを保存
         };
       }
       
@@ -445,13 +446,15 @@ function extractDateFromText(text, formatList) {
           return {
             year: (currentYear + 1).toString(),
             month: result.month.padStart(2, '0'),
-            day: result.day.padStart(2, '0')
+            day: result.day.padStart(2, '0'),
+            matchedText: match[0] // マッチしたテキストを保存
           };
         } else {
           return {
             year: currentYear.toString(),
             month: result.month.padStart(2, '0'),
-            day: result.day.padStart(2, '0')
+            day: result.day.padStart(2, '0'),
+            matchedText: match[0] // マッチしたテキストを保存
           };
         }
       }
@@ -522,8 +525,14 @@ async function parseDateTimeText(dateTimeText) {
     // 日付を抽出
     const dateInfo = extractDateFromText(dateTimeText, dateFormats);
     
+    // 日付マッチ部分を削除したテキストで時刻を抽出
+    let textForTime = dateTimeText;
+    if (dateInfo && dateInfo.matchedText) {
+      textForTime = dateTimeText.replace(dateInfo.matchedText, '');
+    }
+    
     // 時刻を抽出
-    const timeInfo = extractTimeFromText(dateTimeText, timeFormats);
+    const timeInfo = extractTimeFromText(textForTime, timeFormats);
     
     if (!dateInfo && !timeInfo) {
       // 抽出失敗 - 元のテキストをそのまま返す

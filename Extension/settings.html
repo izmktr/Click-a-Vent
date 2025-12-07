@@ -65,7 +65,7 @@
             </div>
             
             <div class="form-group">
-              <label for="config-datetime-xpath">開始時刻のXPath</label>
+              <label for="config-datetime-xpath">開始日時のXPath</label>
               <input type="text" id="config-datetime-xpath" placeholder="/html/body/div[2]/time">
             </div>
             
@@ -117,9 +117,9 @@
 %M.%D"></textarea>
         
         <div class="button-group">
+          <button id="save-date-btn" class="primary-btn" disabled>登録</button>
           <button id="test-date-btn" class="secondary-btn">テスト</button>
           <button id="reset-date-btn" class="secondary-btn">デフォルトに戻す</button>
-          <button id="save-date-btn" class="primary-btn" disabled>登録</button>
         </div>
         
         <div id="date-test-result" class="test-result"></div>
@@ -145,9 +145,9 @@
 %H時"></textarea>
         
         <div class="button-group">
+          <button id="save-time-btn" class="primary-btn" disabled>登録</button>
           <button id="test-time-btn" class="secondary-btn">テスト</button>
           <button id="reset-time-btn" class="secondary-btn">デフォルトに戻す</button>
-          <button id="save-time-btn" class="primary-btn" disabled>登録</button>
         </div>
         
         <div id="time-test-result" class="test-result"></div>
@@ -156,7 +156,15 @@
 
     <!-- 履歴タブ -->
     <div class="tab-content" id="history">
-      <h2>登録履歴（最新30件）</h2>
+      <div class="history-header-row">
+        <h2>登録履歴（最新30件）</h2>
+        <div class="history-option">
+          <label class="checkbox-label">
+            <input type="checkbox" id="add-as-regex">
+            正規表現で追加
+          </label>
+        </div>
+      </div>
       
       <div id="history-list" class="history-list">
         <!-- 動的に生成 -->

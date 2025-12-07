@@ -71,12 +71,15 @@ function setupEventListeners() {
   document.getElementById('test-time-btn').addEventListener('click', testTimeFormat);
   document.getElementById('reset-time-btn').addEventListener('click', resetTimeFormat);
   document.getElementById('save-time-btn').addEventListener('click', saveTimeFormat);
+  
+  // 履歴設定
+  document.getElementById('add-as-regex').addEventListener('change', saveAddAsRegexSetting);
 }
 
 // 設定の読み込み
 async function loadSettings() {
   try {
-    const data = await chrome.storage.sync.get(['autoConfigs', 'dateFormats', 'timeFormats']);
+    const data = await chrome.storage.sync.get(['autoConfigs', 'dateFormats', 'timeFormats', 'addAsRegex']);
     
     // 自動設定
     autoConfigs = data.autoConfigs || [];
@@ -87,6 +90,12 @@ async function loadSettings() {
     
     // 時刻設定
     document.getElementById('time-format-input').value = data.timeFormats || DEFAULT_TIME_FORMATS;
+    
+    // 履歴からの追加設定
+    document.getElementById('add-as-regex').checked = data.addAsRegex || false;
+    
+    // 履歴からの追加設定
+    document.getElementById('add-as-regex').checked = data.addAsRegex || false;
     
     // URLテストセクションを非表示に初期化
     document.getElementById('url-test-section').classList.add('hidden');
@@ -623,10 +632,20 @@ async function addToAutoConfig(index) {
     title = item.url || '';
   }
   
+  // 「正規表現で追加」設定を取得
+  const addAsRegex = document.getElementById('add-as-regex').checked;
+  
+  // URLを加工
+  let processedUrl = item.url || '';
+  if (addAsRegex) {
+    // 正規表現モード: タグをエスケープして冒頭に^を追加
+    processedUrl = '^' + escapeRegExp(processedUrl);
+  }
+  
   // フォームに値を設定
   document.getElementById('config-title').value = title;
-  document.getElementById('config-url').value = item.url || '';
-  document.getElementById('config-use-regex').checked = false;
+  document.getElementById('config-url').value = processedUrl;
+  document.getElementById('config-use-regex').checked = addAsRegex;
   document.getElementById('config-event-xpath').value = item.eventXPath || '';
   document.getElementById('config-datetime-xpath').value = item.dateTimeXPath || '';
   document.getElementById('config-location-xpath').value = item.locationXPath || '';
@@ -636,6 +655,16 @@ async function addToAutoConfig(index) {
   
   // ボタンを有効化
   handleFormInput({ target: document.getElementById('config-url') });
+}
+
+// 「正規表現で追加」設定を保存
+async function saveAddAsRegexSetting() {
+  try {
+    const addAsRegex = document.getElementById('add-as-regex').checked;
+    await chrome.storage.sync.set({ addAsRegex });
+  } catch (error) {
+    console.error('設定の保存エラー:', error);
+  }
 }
 
 // 正規表現の特殊文字をエスケープ

@@ -344,6 +344,22 @@ header h1 {
 }
 
 /* 履歴 */
+.history-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.history-header-row h2 {
+  margin: 0;
+}
+
+.history-option {
+  display: flex;
+  align-items: center;
+}
+
 .history-list {
   margin-top: 20px;
 }
