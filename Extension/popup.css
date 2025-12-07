@@ -157,7 +157,7 @@ h2 {
 
 /* ボタン */
 .primary-btn {
-  width: 100%;
+  flex: 2;
   padding: 12px;
   background-color: #1a73e8;
   color: white;
@@ -178,7 +178,7 @@ h2 {
 }
 
 .secondary-btn {
-  width: 100%;
+  flex: 1;
   padding: 12px;
   background-color: white;
   color: #666;
@@ -188,7 +188,6 @@ h2 {
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
-  margin-top: 10px;
 }
 
 .secondary-btn:hover {
@@ -197,6 +196,8 @@ h2 {
 
 .button-group {
   margin-top: 20px;
+  display: flex;
+  gap: 10px;
 }
 
 /* 終了時刻ボタン */

@@ -23,11 +23,31 @@ header {
   border-bottom: 3px solid #1a73e8;
   padding-bottom: 15px;
   margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 header h1 {
   color: #1a73e8;
   font-size: 28px;
+  margin: 0;
+}
+
+.help-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.help-icon-btn:hover {
+  background-color: #f0f0f0;
 }
 
 /* タブナビゲーション */

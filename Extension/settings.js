@@ -108,6 +108,37 @@ function setupEventListeners() {
   
   // 履歴設定
   document.getElementById('add-as-regex').addEventListener('change', saveAddAsRegexSetting);
+  
+  // ヘルプボタン
+  document.getElementById('settings-help-btn').addEventListener('click', handleHelp);
+  
+  // Placeholderの処理を統一
+  setupPlaceholderHandlers();
+}
+
+// Placeholderの処理を統一
+function setupPlaceholderHandlers() {
+  // すべてのplaceholderを持つinputとtextareaを取得
+  const elementsWithPlaceholder = document.querySelectorAll('input[placeholder], textarea[placeholder]');
+  
+  elementsWithPlaceholder.forEach(element => {
+    // 元のplaceholderを保存
+    const originalPlaceholder = element.getAttribute('placeholder');
+    
+    // フォーカス時: placeholderを空にする
+    element.addEventListener('focus', () => {
+      element.setAttribute('data-placeholder', originalPlaceholder);
+      element.setAttribute('placeholder', '');
+    });
+    
+    // ブラー時: placeholderを元に戻す
+    element.addEventListener('blur', () => {
+      const savedPlaceholder = element.getAttribute('data-placeholder');
+      if (savedPlaceholder) {
+        element.setAttribute('placeholder', savedPlaceholder);
+      }
+    });
+  });
 }
 
 // 設定の読み込み
@@ -1299,4 +1330,9 @@ function parseDurationString(str) {
   
   // 0以上の値を返す（0mなども許容）
   return totalMinutes >= 0 ? Math.round(totalMinutes) : null;
+}
+
+// ヘルプボタンの処理
+function handleHelp() {
+  chrome.tabs.create({ url: chrome.runtime.getURL('help/index.html') });
 }
