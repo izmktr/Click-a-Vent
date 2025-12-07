@@ -17,8 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
         targetContent.classList.add('active');
       }
 
+      // ページトップにスクロール（ハッシュ更新前に実行）
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
       // URLハッシュを更新（ブックマーク可能にする）
-      window.location.hash = tabId;
+      // history.replaceStateを使用してスクロールジャンプを防ぐ
+      history.replaceState(null, null, `#${tabId}`);
     });
   });
 
