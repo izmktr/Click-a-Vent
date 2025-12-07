@@ -3,6 +3,8 @@
   "name": "Click-a-Vent",
   "version": "1.0.0",
   "description": "ページの情報をクリックして選択し、Google Calendarにイベントを登録する拡張機能",
+  "author": "izmktr",
+  "homepage_url": "https://github.com/izmktr/Click-a-Vent",
   "permissions": [
     "storage",
     "activeTab",
