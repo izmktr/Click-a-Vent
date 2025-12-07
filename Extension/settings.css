@@ -209,6 +209,29 @@ header h1 {
   font-size: 12px;
 }
 
+/* チェックボックスグループ */
+.checkbox-group {
+  margin-top: 8px;
+  margin-bottom: 5px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: normal;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
 /* ボタン */
 .primary-btn {
   padding: 12px 24px;
@@ -246,6 +269,18 @@ header h1 {
 .secondary-btn:hover {
   background-color: #f8f8f8;
   border-color: #1a73e8;
+}
+
+/* ボタングループ（横並び） */
+.button-group-horizontal {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.button-group-horizontal .primary-btn,
+.button-group-horizontal .secondary-btn {
+  flex: 1;
 }
 
 .button-group {
@@ -444,4 +479,123 @@ header h1 {
 
 .history-item.expanded .expand-icon {
   transform: rotate(90deg);
+}
+
+/* URLテストセクション */
+.url-test-section {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f0f7ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 8px;
+}
+
+.url-test-section.hidden {
+  display: none;
+}
+
+.url-test-section h3 {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.test-url-result {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.match-result {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.match-result.match {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.match-result.no-match {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.match-result.neutral {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.match-result.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* 履歴テスト結果 */
+.history-test-results {
+  margin-top: 20px;
+}
+
+.history-match-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+.history-match-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  gap: 12px;
+}
+
+.match-icon {
+  font-size: 20px;
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 30px;
+  text-align: center;
+}
+
+.match-icon.match {
+  color: #28a745;
+}
+
+.match-icon.no-match {
+  color: #dc3545;
+}
+
+.history-match-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-match-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-match-url {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.error-text {
+  color: #d32f2f !important;
 }

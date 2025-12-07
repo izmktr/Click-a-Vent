@@ -566,13 +566,19 @@ async function checkAndApplyAutoConfig() {
     
     if (autoConfigs.length === 0) return;
     
-    // URLが正規表現にマッチする設定を検索
+    // URLがマッチする設定を検索
     const matchedConfig = autoConfigs.find(config => {
       try {
-        const regex = new RegExp(config.url);
-        return regex.test(currentUrl);
+        if (config.useRegex) {
+          // 正規表現モード
+          const regex = new RegExp(config.url);
+          return regex.test(currentUrl);
+        } else {
+          // 前方一致モード
+          return currentUrl.startsWith(config.url);
+        }
       } catch (e) {
-        console.error('正規表現エラー:', config.url, e);
+        console.error('URLマッチングエラー:', config.url, e);
         return false;
       }
     });

@@ -44,6 +44,12 @@ function setupEventListeners() {
   document.getElementById('move-down-btn').addEventListener('click', () => moveConfig(1));
   document.getElementById('auto-config-form').addEventListener('submit', handleSubmitConfig);
   
+  // URLテスト
+  document.getElementById('url-test-btn').addEventListener('click', toggleUrlTest);
+  document.getElementById('test-url-input').addEventListener('input', handleTestUrlInput);
+  document.getElementById('config-url').addEventListener('input', handleConfigUrlChange);
+  document.getElementById('config-use-regex').addEventListener('change', handleUseRegexChange);
+  
   // フォーム入力監視
   const formInputs = ['config-title', 'config-url', 'config-event-xpath', 'config-datetime-xpath', 'config-location-xpath'];
   formInputs.forEach(id => {
@@ -81,6 +87,9 @@ async function loadSettings() {
     
     // 時刻設定
     document.getElementById('time-format-input').value = data.timeFormats || DEFAULT_TIME_FORMATS;
+    
+    // URLテストセクションを非表示に初期化
+    document.getElementById('url-test-section').classList.add('hidden');
   } catch (error) {
     console.error('設定の読み込みエラー:', error);
   }
@@ -119,9 +128,13 @@ function selectConfig(index) {
   const config = autoConfigs[index];
   document.getElementById('config-title').value = config.title || '';
   document.getElementById('config-url').value = config.url;
+  document.getElementById('config-use-regex').checked = config.useRegex || false;
   document.getElementById('config-event-xpath').value = config.eventXPath;
   document.getElementById('config-datetime-xpath').value = config.dateTimeXPath || '';
   document.getElementById('config-location-xpath').value = config.locationXPath || '';
+  
+  // URLヒントを更新
+  updateUrlHint();
   
   // 編集フラグをリセット
   clearEditedFlags();
@@ -141,14 +154,21 @@ function handleNewConfig() {
   // フォームをクリア
   document.getElementById('config-title').value = '';
   document.getElementById('config-url').value = '';
+  document.getElementById('config-use-regex').checked = false;
   document.getElementById('config-event-xpath').value = '';
   document.getElementById('config-datetime-xpath').value = '';
   document.getElementById('config-location-xpath').value = '';
+  
+  // URLヒントを更新
+  updateUrlHint();
   
   clearEditedFlags();
   
   document.getElementById('submit-config-btn').textContent = '追加';
   document.getElementById('submit-config-btn').disabled = true;
+  
+  // URLテストセクションを非表示
+  document.getElementById('url-test-section').classList.add('hidden');
   
   renderUrlList();
 }
@@ -222,6 +242,7 @@ async function handleSubmitConfig(e) {
   
   const title = document.getElementById('config-title').value.trim();
   const url = document.getElementById('config-url').value.trim();
+  const useRegex = document.getElementById('config-use-regex').checked;
   const eventXPath = document.getElementById('config-event-xpath').value.trim();
   const dateTimeXPath = document.getElementById('config-datetime-xpath').value.trim();
   const locationXPath = document.getElementById('config-location-xpath').value.trim();
@@ -235,9 +256,9 @@ async function handleSubmitConfig(e) {
     return;
   }
   
-  if (!validateUrl(url)) {
+  if (!validateUrl(url, useRegex)) {
     document.getElementById('config-url').classList.add('error');
-    alert('URLの形式が不正です。');
+    alert(useRegex ? '正規表現の形式が不正です。' : 'URLの形式が不正です。');
     return;
   }
   
@@ -250,6 +271,7 @@ async function handleSubmitConfig(e) {
   const config = {
     title,
     url,
+    useRegex,
     eventXPath,
     dateTimeXPath,
     locationXPath
@@ -265,14 +287,26 @@ async function handleSubmitConfig(e) {
   handleNewConfig();
 }
 
-// URLバリデーション（正規表現として妥当かチェック）
-function validateUrl(url) {
+// URLバリデーション
+function validateUrl(url, useRegex) {
   if (!url) return false;
-  try {
-    new RegExp(url);
-    return true;
-  } catch {
-    return false;
+  
+  if (useRegex) {
+    // 正規表現として妥当かチェック
+    try {
+      new RegExp(url);
+      return true;
+    } catch {
+      return false;
+    }
+  } else {
+    // 前方一致の場合、通常のURLとして妥当かチェック
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -592,12 +626,53 @@ async function addToAutoConfig(index) {
   // フォームに値を設定
   document.getElementById('config-title').value = title;
   document.getElementById('config-url').value = item.url || '';
+  document.getElementById('config-use-regex').checked = false;
   document.getElementById('config-event-xpath').value = item.eventXPath || '';
   document.getElementById('config-datetime-xpath').value = item.dateTimeXPath || '';
   document.getElementById('config-location-xpath').value = item.locationXPath || '';
   
+  // URLヒントを更新
+  updateUrlHint();
+  
   // ボタンを有効化
   handleFormInput({ target: document.getElementById('config-url') });
+}
+
+// 正規表現の特殊文字をエスケープ
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// 「正規表現を使う」チェックボックス変更時の処理
+function handleUseRegexChange() {
+  updateUrlHint();
+  
+  // URLテストセクションが表示されている場合は再テスト
+  const section = document.getElementById('url-test-section');
+  if (!section.classList.contains('hidden')) {
+    handleTestUrlInput();
+    loadHistoryForTest();
+  }
+}
+
+// URLヒントテキストを更新
+function updateUrlHint() {
+  const useRegex = document.getElementById('config-use-regex').checked;
+  const hintElement = document.getElementById('url-hint');
+  const urlInput = document.getElementById('config-url');
+  
+  if (useRegex) {
+    hintElement.textContent = '正規表現でマッチします（例: https://example\\.com/events/.*）';
+    urlInput.placeholder = 'https://example\\.com/events/.*';
+  } else {
+    hintElement.textContent = '前方一致でマッチします';
+    urlInput.placeholder = 'https://example.com/events/';
+  }
+}
+
+// 正規表現の特殊文字をエスケープ
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // テキストから日付を抽出
@@ -685,6 +760,146 @@ function extractTimeFromText(text, formatList) {
   }
   
   return null;
+}
+
+// 履歴を削除
+async function deleteHistory(index) {
+  if (!confirm('この履歴を削除しますか？')) return;
+  
+  try {
+    const data = await chrome.storage.local.get(['eventHistory']);
+    let history = data.eventHistory || [];
+    
+    // 指定されたインデックスの履歴を削除
+    history.splice(index, 1);
+    
+    // 保存
+    await chrome.storage.local.set({ eventHistory: history });
+    
+    // 再描画
+    await loadHistory();
+  } catch (error) {
+    console.error('履歴の削除エラー:', error);
+    alert('削除に失敗しました。');
+  }
+}
+
+// URLテストセクションの表示/非表示を切り替え
+function toggleUrlTest() {
+  const section = document.getElementById('url-test-section');
+  section.classList.toggle('hidden');
+  
+  if (!section.classList.contains('hidden')) {
+    // 表示時にテストを実行
+    handleTestUrlInput();
+    loadHistoryForTest();
+  }
+}
+
+// テストURL入力時の処理
+function handleTestUrlInput() {
+  const testUrl = document.getElementById('test-url-input').value.trim();
+  const configUrl = document.getElementById('config-url').value.trim();
+  const useRegex = document.getElementById('config-use-regex').checked;
+  const resultDiv = document.getElementById('test-url-result');
+  
+  if (!testUrl) {
+    resultDiv.innerHTML = '';
+    return;
+  }
+  
+  if (!configUrl) {
+    resultDiv.innerHTML = '<span class="match-result neutral">⚠ URLを入力してください</span>';
+    return;
+  }
+  
+  // マッチング
+  let isMatch = false;
+  try {
+    if (useRegex) {
+      const regex = new RegExp(configUrl);
+      isMatch = regex.test(testUrl);
+    } else {
+      isMatch = testUrl.startsWith(configUrl);
+    }
+  } catch (e) {
+    resultDiv.innerHTML = '<span class="match-result error">✖ ' + (useRegex ? '正規表現が不正です' : 'URLが不正です') + '</span>';
+    return;
+  }
+  
+  if (isMatch) {
+    resultDiv.innerHTML = '<span class="match-result match">✔ 一致</span>';
+  } else {
+    resultDiv.innerHTML = '<span class="match-result no-match">✖ 不一致</span>';
+  }
+}
+
+// URL正規表現変更時の処理
+function handleConfigUrlChange() {
+  const section = document.getElementById('url-test-section');
+  if (!section.classList.contains('hidden')) {
+    // URLテストセクションが表示されている場合は再テスト
+    handleTestUrlInput();
+    loadHistoryForTest();
+  }
+}
+
+// 履歴を読み込んでテスト
+async function loadHistoryForTest() {
+  const configUrl = document.getElementById('config-url').value.trim();
+  const useRegex = document.getElementById('config-use-regex').checked;
+  const listDiv = document.getElementById('history-match-list');
+  
+  if (!configUrl) {
+    listDiv.innerHTML = '<div class="no-data">URLを入力してください</div>';
+    return;
+  }
+  
+  try {
+    const data = await chrome.storage.local.get(['eventHistory']);
+    const history = data.eventHistory || [];
+    
+    if (history.length === 0) {
+      listDiv.innerHTML = '<div class="no-data">履歴がありません</div>';
+      return;
+    }
+    
+    // 正規表現の妥当性チェック（正規表現モードの場合のみ）
+    let regex = null;
+    if (useRegex) {
+      try {
+        regex = new RegExp(configUrl);
+      } catch (e) {
+        listDiv.innerHTML = '<div class="no-data error-text">正規表現が不正です</div>';
+        return;
+      }
+    }
+    
+    // 履歴の各URLをテスト
+    listDiv.innerHTML = '';
+    history.forEach((item, index) => {
+      const isMatch = useRegex ? regex.test(item.url) : item.url.startsWith(configUrl);
+      const div = document.createElement('div');
+      div.className = 'history-match-item';
+      
+      const icon = isMatch 
+        ? '<span class="match-icon match">✔</span>' 
+        : '<span class="match-icon no-match">✖</span>';
+      
+      div.innerHTML = `
+        ${icon}
+        <div class="history-match-content">
+          <div class="history-match-name">${item.eventName || '(名称なし)'}</div>
+          <div class="history-match-url">${item.url}</div>
+        </div>
+      `;
+      
+      listDiv.appendChild(div);
+    });
+  } catch (error) {
+    console.error('履歴読み込みエラー:', error);
+    listDiv.innerHTML = '<div class="no-data error-text">エラーが発生しました</div>';
+  }
 }
 
 // 履歴を削除

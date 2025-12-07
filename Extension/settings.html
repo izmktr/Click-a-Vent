@@ -49,8 +49,14 @@
             
             <div class="form-group">
               <label for="config-url">URL <span class="required">*</span></label>
-              <input type="text" id="config-url" placeholder="https://example\.com/events/.*" required>
-              <small>正規表現でマッチします（前方一致の場合は ^https://example\.com/events/）</small>
+              <input type="text" id="config-url" placeholder="https://example.com/events/" required>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="config-use-regex">
+                  正規表現を使う
+                </label>
+              </div>
+              <small id="url-hint">前方一致でマッチします</small>
             </div>
             
             <div class="form-group">
@@ -68,7 +74,23 @@
               <input type="text" id="config-location-xpath" placeholder="/html/body/div[3]/span">
             </div>
             
-            <button type="submit" id="submit-config-btn" class="primary-btn" disabled>追加</button>
+            <div class="button-group-horizontal">
+              <button type="submit" id="submit-config-btn" class="primary-btn" disabled>追加</button>
+              <button type="button" id="url-test-btn" class="secondary-btn">URLテスト</button>
+            </div>
+            
+            <div id="url-test-section" class="url-test-section hidden">
+              <div class="form-group">
+                <label for="test-url-input">テストURL</label>
+                <input type="text" id="test-url-input" placeholder="テストURL">
+                <div id="test-url-result" class="test-url-result"></div>
+              </div>
+              
+              <div class="history-test-results" id="history-test-results">
+                <h3>履歴との照合結果</h3>
+                <div id="history-match-list" class="history-match-list"></div>
+              </div>
+            </div>
           </form>
         </div>
       </div>
