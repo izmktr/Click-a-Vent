@@ -277,6 +277,10 @@ async function handleRegister() {
     
     const startDate = new Date(eventDate);
 
+    // 現在のタブのURLを取得
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const sourceUrl = tab?.url || '';
+
     // GoogleカレンダーのURLを構築
     const calendarUrl = new URL('https://calendar.google.com/calendar/render');
     calendarUrl.searchParams.set('action', 'TEMPLATE');
@@ -285,6 +289,11 @@ async function handleRegister() {
     
     if (eventLocation) {
       calendarUrl.searchParams.set('location', eventLocation);
+    }
+
+    // 元のWebページのURLを説明欄に追加
+    if (sourceUrl) {
+      calendarUrl.searchParams.set('details', sourceUrl);
     }
 
     // 新しいタブでGoogleカレンダーの登録画面を開く
