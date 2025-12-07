@@ -319,19 +319,10 @@ function handleOpenCalendar() {
 // ヘルプボタン
 // ヘルプボタン
 function handleHelp() {
-  const helpText = `【使い方】
-
-1. 「ページから情報を入力」をクリック
-2. ページ内の要素をクリックして選択
-   - イベント名
-   - 日付と開始時刻
-   - 場所
-3. 右クリックでスキップ可能
-4. 「登録」ボタンでGoogleカレンダーに追加
-
-※ 初回使用時はGoogleアカウントでのログインが必要です。`;
-  
-  alert(helpText);
+  // ヘルプページを新しいタブで開く
+  chrome.tabs.create({
+    url: chrome.runtime.getURL('help/index.html')
+  });
 }
 
 // ステータスメッセージの表示

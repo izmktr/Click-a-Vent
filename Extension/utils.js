@@ -50,11 +50,10 @@ function extractDateFromText(text, formatList) {
       
       // 年が取得できた場合
       if (result.year && result.month && result.day) {
-        // 2桁の年を4桁に変換（00-49は2000年代、50-99は1900年代）
+        // 2桁の年を4桁に変換（2000年代として扱う）
         let fullYear = result.year;
         if (fullYear.length === 2) {
-          const yearNum = parseInt(fullYear);
-          fullYear = yearNum < 50 ? `20${fullYear}` : `19${fullYear}`;
+          fullYear = `20${fullYear}`;
         }
         
         return {
