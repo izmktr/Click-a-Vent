@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>テクノロジーカンファレンス 2025 - イベント詳細</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Yu Gothic', 'Meiryo', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: #f5f7fa;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 2rem;
+      transition: opacity 0.3s;
+    }
+
+    nav a:hover {
+      opacity: 0.8;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .breadcrumb {
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+    }
+
+    .breadcrumb a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .event-header {
+      background: white;
+      border-radius: 12px;
+      padding: 3rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .event-category {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .event-title {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #2d3748;
+      margin-bottom: 1.5rem;
+      line-height: 1.3;
+    }
+
+    .event-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 1rem;
+      background: #f7fafc;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .meta-icon {
+      font-size: 1.5rem;
+      margin-right: 1rem;
+      color: #667eea;
+    }
+
+    .meta-content {
+      flex: 1;
+    }
+
+    .meta-label {
+      font-size: 0.85rem;
+      color: #718096;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .meta-value {
+      font-size: 1.1rem;
+      color: #2d3748;
+      font-weight: 600;
+    }
+
+    .event-body {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+
+    .main-content {
+      background: white;
+      border-radius: 12px;
+      padding: 2.5rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .sidebar {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      height: fit-content;
+    }
+
+    h2 {
+      color: #2d3748;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      color: #2d3748;
+      margin: 2rem 0 1rem;
+      font-size: 1.4rem;
+    }
+
+    p {
+      color: #4a5568;
+      margin-bottom: 1rem;
+      line-height: 1.8;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 1.5rem 0;
+    }
+
+    .feature-list li {
+      padding: 0.8rem 0;
+      padding-left: 2rem;
+      position: relative;
+      color: #4a5568;
+    }
+
+    .feature-list li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .speaker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .speaker-card {
+      text-align: center;
+      padding: 1.5rem;
+      background: #f7fafc;
+      border-radius: 8px;
+      transition: transform 0.3s;
+    }
+
+    .speaker-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .speaker-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .speaker-name {
+      font-weight: bold;
+      color: #2d3748;
+      margin-bottom: 0.3rem;
+    }
+
+    .speaker-title {
+      font-size: 0.9rem;
+      color: #718096;
+    }
+
+    .register-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .register-box h3 {
+      color: white;
+      margin: 0 0 1rem 0;
+    }
+
+    .register-box .price {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin: 1rem 0;
+    }
+
+    .register-box .price-note {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-register {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-register:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .info-box {
+      background: #f7fafc;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+    }
+
+    .info-box h4 {
+      color: #2d3748;
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #718096;
+      font-size: 0.9rem;
+    }
+
+    .info-value {
+      color: #2d3748;
+      font-weight: 600;
+    }
+
+    .access-map {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: #f7fafc;
+      border-radius: 8px;
+    }
+
+    .access-map h4 {
+      margin-bottom: 1rem;
+      color: #2d3748;
+    }
+
+    .access-info {
+      color: #4a5568;
+      line-height: 1.8;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .tag {
+      background: #e6f2ff;
+      color: #667eea;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+
+    footer {
+      background: #2d3748;
+      color: white;
+      text-align: center;
+      padding: 2rem;
+      margin-top: 4rem;
+    }
+
+    @media (max-width: 768px) {
+      .event-body {
+        grid-template-columns: 1fr;
+      }
+
+      .event-title {
+        font-size: 1.8rem;
+      }
+
+      .event-meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="logo">TechEvents Japan</div>
+      <nav>
+        <a href="#">イベント一覧</a>
+        <a href="#">お知らせ</a>
+        <a href="#">お問い合わせ</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="#">ホーム</a> &gt; <a href="#">イベント</a> &gt; テクノロジーカンファレンス 2025
+    </div>
+
+    <div class="event-header">
+      <span class="event-category">カンファレンス</span>
+      <h1 class="event-title">テクノロジーカンファレンス 2025：AI と Web の未来</h1>
+      
+      <div class="event-meta">
+        <div class="meta-item">
+          <div class="meta-icon">📅</div>
+          <div class="meta-content">
+            <div class="meta-label">開催日時</div>
+            <div class="meta-value">2025年3月15日 13:00〜18:00</div>
+          </div>
+        </div>
+        
+        <div class="meta-item">
+          <div class="meta-icon">📍</div>
+          <div class="meta-content">
+            <div class="meta-label">会場</div>
+            <div class="meta-value">東京国際フォーラム ホールB7</div>
+          </div>
+        </div>
+        
+        <div class="meta-item">
+          <div class="meta-icon">👥</div>
+          <div class="meta-content">
+            <div class="meta-label">定員</div>
+            <div class="meta-value">500名</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="event-body">
+      <div class="main-content">
+        <h2>イベント概要</h2>
+        <p>
+          最新のAI技術とWeb開発のトレンドについて、業界のトップエンジニアが一堂に会するカンファレンスです。
+          ChatGPTやGitHub Copilotなどの生成AIがもたらす開発の変革、最新のフロントエンド技術、
+          クラウドネイティブアーキテクチャなど、今注目のテーマについて深く学べます。
+        </p>
+
+        <h3>このイベントで得られるもの</h3>
+        <ul class="feature-list">
+          <li>最新のAI技術とその実践的な活用方法</li>
+          <li>次世代Web開発のベストプラクティス</li>
+          <li>業界トップエンジニアとの直接的な交流機会</li>
+          <li>実務で使える具体的なノウハウとツール</li>
+          <li>同じ志を持つエンジニアとのネットワーキング</li>
+        </ul>
+
+        <h3>タイムテーブル</h3>
+        <div class="info-box">
+          <div class="info-item">
+            <div class="info-label">13:00 - 13:15</div>
+            <div class="info-value">開会挨拶・基調講演</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">13:15 - 14:15</div>
+            <div class="info-value">セッション1: 生成AIが変える開発の未来</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">14:30 - 15:30</div>
+            <div class="info-value">セッション2: React 19とNext.js 15の新機能</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">15:45 - 16:45</div>
+            <div class="info-value">セッション3: クラウドネイティブ設計の実践</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">17:00 - 18:00</div>
+            <div class="info-value">パネルディスカッション＆Q&A</div>
+          </div>
+        </div>
+
+        <h3>登壇者</h3>
+        <div class="speaker-grid">
+          <div class="speaker-card">
+            <div class="speaker-avatar">山田</div>
+            <div class="speaker-name">山田 太郎</div>
+            <div class="speaker-title">AI研究所 主席研究員</div>
+          </div>
+          <div class="speaker-card">
+            <div class="speaker-avatar">佐藤</div>
+            <div class="speaker-name">佐藤 花子</div>
+            <div class="speaker-title">Tech Corp CTO</div>
+          </div>
+          <div class="speaker-card">
+            <div class="speaker-avatar">鈴木</div>
+            <div class="speaker-name">鈴木 一郎</div>
+            <div class="speaker-title">Web開発コンサルタント</div>
+          </div>
+        </div>
+
+        <h3>対象者</h3>
+        <p>
+          Web開発エンジニア、AIエンジニア、システムアーキテクト、技術リーダー、
+          最新技術に興味のある学生など、どなたでもご参加いただけます。
+        </p>
+
+        <div class="tag-list">
+          <span class="tag">#AI</span>
+          <span class="tag">#Web開発</span>
+          <span class="tag">#カンファレンス</span>
+          <span class="tag">#エンジニア</span>
+          <span class="tag">#React</span>
+          <span class="tag">#Next.js</span>
+          <span class="tag">#クラウド</span>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="register-box">
+          <h3>参加申し込み</h3>
+          <div class="price">¥5,000</div>
+          <div class="price-note">早期割引適用中（通常 ¥8,000）</div>
+          <button class="btn-register">今すぐ申し込む</button>
+        </div>
+
+        <div class="info-box">
+          <h4>開催情報</h4>
+          <div class="info-item">
+            <span class="info-label">主催</span>
+            <span class="info-value">TechEvents Japan</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">協賛</span>
+            <span class="info-value">Tech Corporation</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">参加費</span>
+            <span class="info-value">¥5,000</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">言語</span>
+            <span class="info-value">日本語</span>
+          </div>
+        </div>
+
+        <div class="access-map">
+          <h4>アクセス</h4>
+          <div class="access-info">
+            <strong>東京国際フォーラム</strong><br>
+            〒100-0005<br>
+            東京都千代田区丸の内3-5-1<br><br>
+            
+            <strong>最寄り駅</strong><br>
+            JR有楽町駅より徒歩1分<br>
+            東京メトロ有楽町駅直結<br>
+            JR東京駅より徒歩5分
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 TechEvents Japan. All rights reserved.</p>
+  </footer>
+</body>
+</html>
