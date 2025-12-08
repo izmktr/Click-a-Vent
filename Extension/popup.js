@@ -200,9 +200,10 @@ async function handleSelectFromPage() {
     } catch (error) {
       // コンテンツスクリプトが注入されていない場合は注入する
       try {
+        // utils.jsを先に注入してから、content.jsを注入
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
-          files: ['content.js']
+          files: ['utils.js', 'content.js']
         });
         
         await chrome.scripting.insertCSS({
@@ -576,9 +577,10 @@ async function applyAutoConfig(tab, config) {
       await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
     } catch (error) {
       // コンテンツスクリプトが注入されていない場合は注入する
+      // utils.jsを先に注入してから、content.jsを注入
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        files: ['content.js']
+        files: ['utils.js', 'content.js']
       });
       await chrome.scripting.insertCSS({
         target: { tabId: tab.id },
