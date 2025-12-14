@@ -12,6 +12,7 @@ const loginScreen = document.getElementById('login-screen');
 const mainScreen = document.getElementById('main-screen');
 const selectFromPageBtn = document.getElementById('select-from-page-btn');
 const registerBtn = document.getElementById('register-btn');
+const resetBtn = document.getElementById('reset-btn');
 const closeMainBtn = document.getElementById('close-main-btn');
 const openCalendarBtn = document.getElementById('open-calendar-btn');
 const settingsBtn = document.getElementById('settings-btn');
@@ -41,13 +42,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadSelectedData(result.selectedData);
     // 使用後はクリア
     await chrome.storage.local.remove(['selectedData']);
+    // 読み込んだデータをタブデータとして保存
+    await saveTabData();
+  } else {
+    // selectedDataがない場合のみ、タブごとの保存データを復元
+    await restoreTabData();
   }
 });
 // イベントリスナーの設定
 function setupEventListeners() {
-  closeMainBtn.addEventListener('click', () => window.close());
+  closeMainBtn.addEventListener('click', async () => {
+    await saveTabData();
+    window.close();
+  });
   selectFromPageBtn.addEventListener('click', handleSelectFromPage);
   registerBtn.addEventListener('click', handleRegister);
+  resetBtn.addEventListener('click', handleReset);
   openCalendarBtn.addEventListener('click', handleOpenCalendar);
   settingsBtn.addEventListener('click', handleSettings);
   helpBtn.addEventListener('click', handleHelp);
@@ -85,6 +95,12 @@ function setupEventListeners() {
   
   // 終了日時直接入力時のイベントリスナー
   eventEndDateInput.addEventListener('change', handleEndDateChange);
+  
+  // 入力フィールドの変更を自動保存
+  eventNameInput.addEventListener('input', debounce(saveTabData, 500));
+  eventDateInput.addEventListener('input', debounce(saveTabData, 500));
+  eventEndDateInput.addEventListener('input', debounce(saveTabData, 500));
+  eventLocationInput.addEventListener('input', debounce(saveTabData, 500));
 }
 
 // 期間ボタンの読み込みと生成
@@ -316,6 +332,42 @@ async function handleRegister() {
     showStatusMessage('エラーが発生しました。', 'error');
   }
 }
+// リセットボタン
+async function handleReset() {
+  // 入力フィールドをクリア
+  eventNameInput.value = '';
+  eventDateInput.value = '';
+  eventEndDateInput.value = '';
+  eventLocationInput.value = '';
+  
+  // カスタム入力欄をクリア
+  const customDurationInput = document.getElementById('custom-duration');
+  if (customDurationInput) {
+    customDurationInput.value = '';
+  }
+  
+  // 期間ボタンをデフォルトに戻す
+  const durationButtons = document.querySelectorAll('.duration-btn');
+  durationButtons.forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // デフォルトボタンを探してアクティブにする
+  // 1時間（60分）をデフォルトとする
+  const defaultBtn = Array.from(durationButtons).find(btn => parseInt(btn.dataset.minutes) === 60);
+  if (defaultBtn) {
+    defaultBtn.classList.add('active');
+    selectedDurationMinutes = 60;
+  } else if (durationButtons.length > 0) {
+    // 1時間ボタンがない場合は最初のボタンをアクティブにする
+    durationButtons[0].classList.add('active');
+    selectedDurationMinutes = parseInt(durationButtons[0].dataset.minutes);
+  }
+  
+  // タブの保存データもクリア
+  await clearTabData();
+}
+
 // 設定ボタン
 function handleSettings() {
   chrome.tabs.create({ url: chrome.runtime.getURL('settings.html') });
@@ -463,7 +515,7 @@ function handleEndDateChange() {
 }
 
 // 選択されたデータをフォームに読み込む
-async function loadSelectedData(data, showMessage = true) {
+async function loadSelectedData(data, showIndicator = true) {
   if (data.eventName) {
     eventNameInput.value = data.eventName;
   }
@@ -478,16 +530,17 @@ async function loadSelectedData(data, showMessage = true) {
     eventLocationInput.value = data.location;
   }
   
-  if (showMessage) {
-    showStatusMessage('ページから情報を取得しました！', 'success');
+  if (showIndicator) {
+    // 手動選択のインジケーターを表示
+    showManualSelectionIndicator(data);
   }
 }
 
 // コンテンツスクリプトからのメッセージを受信
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'selectedData') {
-    // 選択されたデータをフォームに入力
-    loadSelectedData(request.data);
+    // 選択されたデータをフォームに入力（インジケーター表示あり）
+    loadSelectedData(request.data, true);
     sendResponse({ success: true });
   }
   return true;
@@ -647,4 +700,129 @@ function showAutoConfigIndicator(config, data) {
   indicator.addEventListener('mouseleave', () => {
     tooltip.classList.add('hidden');
   });
+}
+
+// 手動選択インジケーターを表示
+function showManualSelectionIndicator(data) {
+  const indicator = document.getElementById('auto-config-indicator');
+  const tooltip = document.getElementById('auto-config-tooltip');
+  
+  if (!indicator || !tooltip) return;
+  
+  // ツールチップの内容を作成
+  let tooltipContent = `<div class="tooltip-row"><span class="tooltip-label">取得方法:</span> 手動選択</div>`;
+  
+  if (data.eventName) {
+    tooltipContent += `<div class="tooltip-row"><span class="tooltip-label">タイトル:</span> ${data.eventName}</div>`;
+  }
+  
+  if (data.dateTime) {
+    tooltipContent += `<div class="tooltip-row"><span class="tooltip-label">開始日時:</span> ${data.dateTime}</div>`;
+  }
+  
+  if (data.location) {
+    tooltipContent += `<div class="tooltip-row"><span class="tooltip-label">場所:</span> ${data.location}</div>`;
+  }
+  
+  tooltip.innerHTML = tooltipContent;
+  
+  // インジケーターを表示
+  indicator.classList.remove('hidden');
+  
+  // マウスオーバーでツールチップを表示
+  indicator.addEventListener('mouseenter', () => {
+    tooltip.classList.remove('hidden');
+  });
+  
+  indicator.addEventListener('mouseleave', () => {
+    tooltip.classList.add('hidden');
+  });
+}
+
+// タブごとのデータを保存
+async function saveTabData() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) return;
+    
+    const data = {
+      url: tab.url,
+      eventName: eventNameInput.value,
+      eventDate: eventDateInput.value,
+      eventEndDate: eventEndDateInput.value,
+      eventLocation: eventLocationInput.value,
+      selectedDurationMinutes: selectedDurationMinutes
+    };
+    
+    const storageKey = `tabData_${tab.id}`;
+    await chrome.storage.local.set({ [storageKey]: data });
+  } catch (error) {
+    console.error('データ保存エラー:', error);
+  }
+}
+
+// タブごとのデータを復元
+async function restoreTabData() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) return;
+    
+    const storageKey = `tabData_${tab.id}`;
+    const result = await chrome.storage.local.get([storageKey]);
+    const savedData = result[storageKey];
+    
+    if (!savedData) return;
+    
+    // URLが変わっている場合はデータをクリアして復元しない
+    if (savedData.url !== tab.url) {
+      await chrome.storage.local.remove([storageKey]);
+      return;
+    }
+    
+    // データを復元
+    if (savedData.eventName) eventNameInput.value = savedData.eventName;
+    if (savedData.eventDate) eventDateInput.value = savedData.eventDate;
+    if (savedData.eventEndDate) eventEndDateInput.value = savedData.eventEndDate;
+    if (savedData.eventLocation) eventLocationInput.value = savedData.eventLocation;
+    
+    // 期間ボタンの状態を復元
+    if (savedData.selectedDurationMinutes !== undefined) {
+      selectedDurationMinutes = savedData.selectedDurationMinutes;
+      const durationButtons = document.querySelectorAll('.duration-btn');
+      durationButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (parseInt(btn.dataset.minutes) === savedData.selectedDurationMinutes) {
+          btn.classList.add('active');
+        }
+      });
+    }
+  } catch (error) {
+    console.error('データ復元エラー:', error);
+  }
+}
+
+// タブのデータをクリア
+async function clearTabData() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) return;
+    
+    const storageKey = `tabData_${tab.id}`;
+    await chrome.storage.local.remove([storageKey]);
+  } catch (error) {
+    console.error('データクリアエラー:', error);
+  }
+}
+
+// デバウンス関数（連続した呼び出しを制限）
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
