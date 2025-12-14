@@ -522,9 +522,14 @@ async function loadSelectedData(data, showIndicator = true) {
   if (data.dateTime) {
     // 日付・時刻テキストをISO形式に変換
     const parsedDateTime = await parseDateTimeText(data.dateTime);
-    eventDateInput.value = parsedDateTime;
-    // 終了日時を更新
-    updateEndDateTime();
+    // 有効な日時形式（YYYY-MM-DDTHH:mm）かチェック
+    const isValidDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(parsedDateTime);
+    if (isValidDateTime) {
+      eventDateInput.value = parsedDateTime;
+      // 終了日時を更新
+      updateEndDateTime();
+    }
+    // 無効な場合は日時フィールドには入力しない
   }
   if (data.location) {
     eventLocationInput.value = data.location;
